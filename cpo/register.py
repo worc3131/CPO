@@ -2,18 +2,18 @@
 from __future__ import annotations
 
 import threading
-from typing import Dict, Iterable, List, Sequence
+from typing import Dict, List, Sequence
 import weakref
 
 from .atomic import AtomicCounter
-from . import util
+from . import conc
 
 class StateKey(int):
     pass
 
 stateKey = AtomicCounter()
 
-NONEWAITING: Sequence[threading.Thread] = []
+NONEWAITING: List[threading.Thread] = []
 
 registered = {}
 
@@ -61,10 +61,10 @@ class Debuggable:
 def waiting() -> Dict[threading.Thread, List[Debuggable]]:
     raise NotImplemented
 
-def show_threads(caption: str, threads: Iterable[threading.Thread]):
+def show_threads(caption: str, threads: Sequence[threading.Thread]):
     if len(threads)>0:
         c = ""
         print(caption, end='')
         for thread in threads:
-            print(f'{c} {util.get_thread_identity(thread)}', end='')
+            print(f'{c} {conc.get_thread_identity(thread)}', end='')
             c = ","

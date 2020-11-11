@@ -5,9 +5,10 @@ import threading
 from typing import Generic, Optional, TypeVar
 
 from .atomic import Atomic, AtomicNum
+from . import conc
 from .name import Named, NameGenerator
-from . import util
 from .register import Debuggable
+from . import util
 from .util import Nanoseconds, Singleton
 
 class PortState(metaclass=Singleton):
@@ -163,11 +164,11 @@ class _OneOne(SyncChan[T]):
         else:
             if ww is not None:
                 if self.full.get():
-                    result = f'!{self.buffer} from {util.get_thread_identity(ww)}'
+                    result = f'!{self.buffer} from {conc.get_thread_identity(ww)}'
                 else:
-                    result = f'! from {util.get_thread_identity(ww)}'
+                    result = f'! from {conc.get_thread_identity(ww)}'
             else:
-                result = f'? from {util.get_thread_identity(wr)}'
+                result = f'? from {conc.get_thread_identity(wr)}'
         return result + self.finished_rw()
 
     def __str__(self) -> str:
@@ -184,14 +185,14 @@ class _OneOne(SyncChan[T]):
         current = threading.current_thread()
         last_writer: threading.Thread = self.writer.get_and_set(current)
         assert last_writer is None, f'c << {value} overtaking ' \
-                                f'[{util.get_thread_identity(last_writer)}]' \
-                                f' in {util.get_thread_identity(current)}'
+                                f'[{conc.get_thread_identity(last_writer)}]' \
+                                f' in {conc.get_thread_identity(current)}'
         self.buffer = value
         self.full.set(True)
         self.in_port_event(READYSTATE)
-        util.unpark(self.reader.get())
+        conc.unpark(self.reader.get())
         while not self.closed.get() and self.full.get():
-            util.park_current_thread()
+            conc.park_current_thread()
         if self.full.get():
             self.check_open()
         self.writer.set(None)
@@ -206,12 +207,12 @@ class _OneOne(SyncChan[T]):
                                   f' in {util.get_thread_identity(current)}'
         self.out_port_event(READYSTATE)
         while not self.closed.get() and not self.full.get():
-            util.park_current_thread()
+            conc.park_current_thread()
         self.check_open()
         result = self.buffer
         self.buffer = None
         self.full.set(False)
-        util.unpark(self.writer.get_and_set(None))
+        conc.unpark(self.writer.get_and_set(None))
         self.reader.set(None)
         self.finished_read()
         return result
