@@ -9,7 +9,7 @@ from . import conc
 from .name import Named, NameGenerator
 from .register import Debuggable
 from . import util
-from .util import Nanoseconds, Singleton
+from .util import Nanoseconds, Singleton, synced_print
 
 class PortState(metaclass=Singleton):
     def __str__(self) -> str:
@@ -176,9 +176,9 @@ class _OneOne(SyncChan[T]):
         return f'{self.name}: {closed} {self.current_state}'
 
     def show_state(self) -> None:
-        print(f"CHANNEL {self.name}: {self.name_generator._kind} ", end='')
-        if self.closed.get(): print('(CLOSED) ', end='')
-        print(self.current_state(), end='')
+        synced_print(f"CHANNEL {self.name}: {self.name_generator._kind} ", end='')
+        if self.closed.get(): synced_print('(CLOSED) ', end='')
+        synced_print(self.current_state(), end='')
 
     def __lshift__(self, value) -> None:
         self.check_open()

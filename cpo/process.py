@@ -2,6 +2,7 @@
 import traceback
 
 from .atomic import AtomicCounter
+from . import util
 
 class Process:
 
@@ -12,6 +13,8 @@ class Process:
         return f'Proc-{next(self.process_count)}'
 
     def handle_exception(self, name, exc, tb):
-        print(f"Process {name} terminated by throwing {exc}")
+        util.synced_print(f"Process {name} terminated by throwing {exc}")
         traceback.print_tb(tb)
+
+
 

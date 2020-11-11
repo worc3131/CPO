@@ -24,3 +24,10 @@ class Closed(Stopped):
 
 def get_prop_else(name, orelse, coerce=None):
     raise NotImplementedError
+
+_print_lock = threading.Lock()
+def synced_print(*args, **kwargs):
+    # this would deadlock all threads if it was passed an infinite
+    # iterator, generator etc. s.t. print() never returned
+    with _print_lock:
+        print(*args, **kwargs)

@@ -4,11 +4,11 @@ import time
 
 import pytest
 
-import cpo.channel
+from cpo import channel, util
 
 @pytest.fixture
 def oneone():
-    return cpo.channel.OneOne('oneone_channel')
+    return channel.OneOne('oneone_channel')
 
 def test_oneone(oneone):
     c = oneone
