@@ -41,4 +41,19 @@ def test_oneone_read_waits(oneone):
     time.sleep(0.1)
     assert not t.is_alive()
 
+def test_oneone_multiple(oneone):
+    c = oneone
+    l = [x*(x-20) for x in range(100)]
+    def write():
+        for x in l:
+            c << x
+    threading.Thread(target=write).start()
+    for x in l:
+        assert ~c == x
 
+def test_oneone_strings(oneone):
+    c = oneone
+    def write():
+        c << "hello world"
+    threading.Thread(target=write).start()
+    assert ~c == "hello world"
