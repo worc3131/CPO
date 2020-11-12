@@ -1,6 +1,7 @@
 
 from abc import ABCMeta
 
+import inspect
 import threading
 from typing import Dict, Optional
 
@@ -36,6 +37,14 @@ class Closed(Stopped):
 
 def get_prop_else(name, orelse, coerce=None):
     raise NotImplementedError
+
+def get_ultimate_type(fn):
+    # for library objects which use a factory find out
+    # the actual underlying class, by creating a base instance
+    # and getting its type
+    while inspect.isfunction(fn) or inspect.isbuiltin(fn):
+        fn = fn()
+    return type(fn)
 
 _print_lock = threading.Lock()
 def synced_print(*args, **kwargs):

@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import threading
 from abc import ABC
-from typing import Generic, Optional, TypeVar
+from typing import Generic, Optional, Sequence, TypeVar
 
 from .atomic import Atomic, AtomicNum
 from . import conc
@@ -350,7 +350,6 @@ class _N2N(_OneOne, SharedChan):
 
     def show_state(self) -> None:
         raise NotImplementedError
-
 
 class _N2NGenerator(NameGenerator, metaclass=Singleton):
 
