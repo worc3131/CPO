@@ -1,6 +1,14 @@
 
+from abc import ABCMeta
+
 import threading
 from typing import Dict, Optional
+
+
+class Runnable(metaclass=ABCMeta):
+    def run(self) -> None:
+        raise NotImplemented
+
 
 class Singleton(type):
     _instances: Dict[type, type] = {}
@@ -8,6 +16,7 @@ class Singleton(type):
         if cls not in cls._instances:
             cls._instances[cls] = super(Singleton, cls).__call__(*args, **kwargs)
         return cls._instances[cls]
+
 
 class Nanoseconds(int):
     pass

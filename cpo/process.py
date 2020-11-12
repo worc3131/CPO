@@ -1,4 +1,6 @@
 
+from __future__ import annotations
+
 from abc import ABCMeta
 import threading
 import traceback
@@ -10,13 +12,14 @@ from . import util
 
 Latch = conc.CountDownLatch
 
-_executor = None
+print('TODO change executor!!')
+from concurrent.futures import ThreadPoolExecutor
+from . import executor
+pool = ThreadPoolExecutor(max_workers=1) # 5
+_executor = executor.ThreadPooledExecutor(False, pool)
 
-class Runnable(metaclass=ABCMeta):
-    def run(self) -> None:
-        raise NotImplemented
 
-class Handle(Runnable):
+class Handle(util.Runnable):
     # Handle on a CSO process
 
     def __init__(self, name: str, body,
@@ -73,11 +76,11 @@ class PROC(metaclass=ABCMeta):
         self.__name: Optional[str] = None
         self.__stack_size: Optional[int] = None
 
-    def apply(self) -> None:
-        raise NotImplemented
+    def __call__(self) -> None:
+        raise NotImplementedError
 
     def fork(self) -> Handle:
-        raise NotImplemented
+        raise NotImplementedError
 
     def __str__(self):
         return self.name
@@ -133,7 +136,7 @@ class Simple(PROC):
         handle.start()
         return handle
 
-    def apply(self) -> None:
+    def __call__(self) -> None:
         self.body()
 
 class _SKIP(Simple):
@@ -159,13 +162,14 @@ class Par(PROC):
         self.__stack_size = 0
         self.__name = _name
 
-    def apply(self):
-        latch = conc.CountDownLatch(len(self.procs)-1)
+    def __call__(self):
+        procs = self.procs
+        latch = conc.CountDownLatch(len(procs)-1)
         peer_handles = [
             Handle(proc.name, proc, latch, proc.stack_size)
             for proc in procs[1:]
         ]
-        first_handle = Handle(procs[0].name, procs[0], None, procs[9].stack_size)
+        first_handle = Handle(procs[0].name, procs[0], None, procs[0].stack_size)
         for handle in peer_handles:
             handle.start()
         first_handle.run()
@@ -189,7 +193,7 @@ class Par(PROC):
 
     def fork(self) -> Handle:
         assert self.name is not None
-        handle = Handle(self.name, self.apply, conc.CountDownLatch())
+        handle = Handle(self.name, self.__call__, conc.CountDownLatch())
         handle.start()
         return handle
 
@@ -200,7 +204,7 @@ class ParException(Exception):
         self.exceptions = exceptions
 
     def __repr__(self):
-        return f'ParException({", ".join(exceptions)})'
+        return f'ParException({", ".join(self.exceptions)})'
 
 
 class ParSyntax(PROC):
@@ -214,9 +218,9 @@ class ParSyntax(PROC):
 
     @property
     def compiled(self):
-        return Process.Par(self.name)(self.revprocs)
+        return Par(self.name, list(self.revprocs))
 
-    def apply(self):
+    def __call__(self):
         return self.compiled()
 
     def fork(self):
@@ -224,7 +228,7 @@ class ParSyntax(PROC):
 
     @property
     def name(self):
-        return "||".join(x.name for x in self.revprocs)
+        return "||".join(str(x.name) for x in self.revprocs)
 
     def __or__(self, other: Union[PROC, ParSyntax]):
         if isinstance(other, ParSyntax):

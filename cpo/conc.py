@@ -27,6 +27,7 @@ class CountDownLatch:
 RLockClass = threading.RLock
 if not inspect.isclass(RLockClass):
     RLockClass = type(RLockClass())
+assert isinstance(RLockClass, type)
 
 class XRLock(RLockClass):
 
