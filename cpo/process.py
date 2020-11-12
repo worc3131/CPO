@@ -228,7 +228,7 @@ class ParSyntax(PROC):
 
     @property
     def name(self):
-        return "||".join(str(x.name) for x in self.revprocs)
+        return "|".join(str(x.name) for x in self.revprocs)
 
     def __or__(self, other: Union[PROC, ParSyntax]):
         if isinstance(other, ParSyntax):

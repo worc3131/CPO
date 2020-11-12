@@ -4,7 +4,7 @@ import time
 
 import pytest
 
-from cpo import channel
+from cpo import channel, process
 
 @pytest.fixture
 def oneone():
@@ -59,6 +59,29 @@ def test_oneone_strings(oneone):
     assert ~c == "hello world"
 
 def test_manymany():
-    c = channel._N2N(1, 1, "", False, False)
-    
+    c = channel._N2N(5, 5, "", False, False)
+
+    def write(i):
+        def f():
+            for j in range(500):
+                c << i + j
+        return f
+    result = [[] for _ in range(5)]
+
+    def read(i):
+        def f():
+            while True:
+                result[i].append(~c)
+        return f
+
+    def kill():
+        time.sleep(3)
+        c.close()
+
+    p = process.ParSyntax([process.Simple(kill)])
+    p = p | process.ParSyntax([process.Simple(write(i*1000)) for i in range(5)])
+    p = p | process.ParSyntax([process.Simple(read(i))       for i in range(5)])
+    p()
+    import pdb; pdb.set_trace()  # TODO - add asserts
+
 

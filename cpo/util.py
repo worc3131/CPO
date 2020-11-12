@@ -20,7 +20,8 @@ class Singleton(type):
 
 
 class Nanoseconds(int):
-    pass
+    def to_seconds(self) -> float:
+        return self*1e-9
 
 class Milliseconds(int):
     pass
