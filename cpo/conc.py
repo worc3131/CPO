@@ -18,6 +18,31 @@ class CountDownLatch:
 
     def wait(self):
         self._event.wait()
+        
+
+class XRLock(threading.RLock):
+
+    def __init__(self):
+        self._waiters = set()
+        # last but maybe not current owner (if there is no owner)
+        self._last_owner = None
+
+    def acquire(self, *args, **kwargs) -> None:
+        t = threading.current_thread()
+        self._waiters.add(t)
+        super().acquire(*args, **kwargs)
+        self._last_owner = t
+        self._waiters.remove(t)
+
+    def get_waiting(self, cond=None):
+        if cond is None:
+            return list(self._waiters)
+        else:
+            return [x for x in self._waiters if cond(x)]
+
+    def last_owner(self):
+        return self._last_owner
+
 
 def get_thread_identity(thread: Optional[threading.Thread]):
     if thread is None:
