@@ -57,3 +57,8 @@ def test_oneone_strings(oneone):
         c << "hello world"
     threading.Thread(target=write).start()
     assert ~c == "hello world"
+
+def test_manymany():
+    c = channel._N2N(1, 1, "", False, False)
+    
+

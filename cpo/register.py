@@ -24,10 +24,8 @@ def register(obj: Debuggable) -> StateKey:
 
 class Debuggable:
 
-    def __new__(cls, self):
-        instance = super().__new__(cls)
-        instance._key: StateKey = -1
-        return instance
+    def __init__(self):
+        self._key: StateKey = -1
 
     def register(self):
         if self._key < 0:

@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import threading
 from abc import ABC
+import functools
 from typing import Generic, Optional, Sequence, TypeVar
 
 from .atomic import Atomic, AtomicNum
@@ -38,6 +39,7 @@ class _READYSTATE(PortState):
     def to_state_string(self) -> str:
         return "RDY: "
 READYSTATE = _READYSTATE()
+
 
 TI = TypeVar('TI')
 class InPort(Generic[TI]):
@@ -104,6 +106,9 @@ class OutPort(Generic[TO]):
 T = TypeVar('T')
 class Chan(InPort[T], OutPort[T], Named, Debuggable, ABC):
 
+    def __init__(self):
+        Debuggable.__init__(self)
+
     def close(self) -> None:
         raise NotImplementedError
 
@@ -114,7 +119,9 @@ class Chan(InPort[T], OutPort[T], Named, Debuggable, ABC):
         pass
 
 class SyncChan(Chan[T], ABC):
-    pass
+
+    def __init__(self):
+        Chan.__init__(self)
 
 class SharedChan(Chan[T], ABC):
     pass
@@ -122,6 +129,7 @@ class SharedChan(Chan[T], ABC):
 class _OneOne(SyncChan[T]):
 
     def __init__(self, name):
+        SyncChan.__init__(self)
         self.set_name(name)
         self.reader: Atomic[Optional[threading.Thread]] = Atomic(None)
         self.writer: Atomic[Optional[threading.Thread]] = Atomic(None)
@@ -287,7 +295,7 @@ class _OneOneGenerator(NameGenerator, metaclass=Singleton):
 
 OneOne = _OneOneGenerator()
 
-class _N2N(_OneOne, SharedChan):
+class _N2N(_OneOne[T]): #, SharedChan):
 
     def __init__(self, writers: int, readers: int,
                  name: str, fair_out: bool, fair_in: bool) -> None:
@@ -305,7 +313,7 @@ class _N2N(_OneOne, SharedChan):
         if self.rs.dec(1) == 0:
             self.close()
 
-    def __lshift__(self, value):
+    def __lshift__(self, value: T):
         with self.wm:
             super().__lshift__(value)
 
@@ -323,7 +331,7 @@ class _N2N(_OneOne, SharedChan):
         else:
             return False
 
-    def __invert__(self):
+    def __invert__(self) -> T:
         with self.rm:
             super().__invert__()
 
@@ -356,10 +364,26 @@ class _N2NGenerator(NameGenerator, metaclass=Singleton):
     def __init__(self):
         super().__init__('N2N')
 
-    def __call__(self, writers: int, readers: int, name: str,
-                 fair_out: bool, fair_in: bool) -> _N2N:
+    def __call__(self, writers: int = 0, readers: int = 0, name: Optional[str] = None,
+                 fair_out: bool = False, fair_in: bool = False) -> _N2N:
         if name is None:
             name = self._new_name()
         return _N2N(writers, readers, name, fair_out, fair_in)
 
 N2N = _N2NGenerator()
+
+def ManyOne(writers: int = 0, name: Optional[str] = None):
+    if name is None:
+        name = N2N._new_name('ManyOne')
+    return N2N(writers=writers, readers=1, name=name)
+
+def OneMany(readers: int = 0, name: Optional[str] = None):
+    if name is None:
+        name = N2N._new_name('OneMany')
+    return N2N(writers=1, readers=readers, name=name)
+
+def ManyMany(name: Optional[str] = None):
+    if name is None:
+        name = N2N._new_name('ManyMany')
+    return N2N(name=name)
+
