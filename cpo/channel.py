@@ -221,8 +221,8 @@ class _OneOne(SyncChan[T]):
         if not self.closed.get_and_set(True):
             self.out_port_event(CLOSEDSTATE)
             self.in_port_event(CLOSEDSTATE)
-            unpark(self.reader.get_and_set(null))
-            unpark(self.writer.get_and_set(null))
+            conc.unpark(self.reader.get_and_set(None))
+            conc.unpark(self.writer.get_and_set(None))
             self.unregister()
 
     def extended_rendezvous(self, func):

@@ -15,7 +15,7 @@ Latch = conc.CountDownLatch
 print('TODO change executor!!')
 from concurrent.futures import ThreadPoolExecutor
 from . import executor
-pool = ThreadPoolExecutor(max_workers=1) # 5
+pool = ThreadPoolExecutor(max_workers=2) # 5
 _executor = executor.ThreadPooledExecutor(False, pool)
 
 

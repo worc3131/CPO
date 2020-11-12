@@ -38,5 +38,6 @@ _print_lock = threading.Lock()
 def synced_print(*args, **kwargs):
     # this would deadlock all threads if it was passed an infinite
     # iterator, generator etc. s.t. print() never returned
+    kwargs['flush'] = True
     with _print_lock:
         print(*args, **kwargs)
