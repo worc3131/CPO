@@ -29,7 +29,7 @@ def test_process2():
     p()
     assert result == 234
 
-def test_doubler():
+def test_close_channel():
     c1 = channel.OneOne()
     c2 = channel.OneOne()
     result = 0
