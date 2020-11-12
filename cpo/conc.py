@@ -1,4 +1,5 @@
 
+import inspect
 import threading
 from typing import Optional
 
@@ -6,7 +7,7 @@ from .atomic import AtomicNum
 from .util import Nanoseconds
 
 class CountDownLatch:
-    def __init__(self, count: int):
+    def __init__(self, count: int = 1):
         self._event = threading.Event()
         self._count = AtomicNum(count)
         if count <= 0:
@@ -18,21 +19,29 @@ class CountDownLatch:
 
     def wait(self):
         self._event.wait()
-        
 
-class XRLock(threading.RLock):
+
+# threading.RLock is a function in CPython which switches between
+# C and python versions depending on availability, we need to unpack this
+# in order to be able to extend RLock
+RLockClass = threading.RLock
+if not inspect.isclass(RLockClass):
+    RLockClass = type(RLockClass())
+
+class XRLock(RLockClass):
 
     def __init__(self):
         self._waiters = set()
         # last but maybe not current owner (if there is no owner)
         self._last_owner = None
 
-    def acquire(self, *args, **kwargs) -> None:
+    def acquire(self, *args, **kwargs) -> bool:
         t = threading.current_thread()
         self._waiters.add(t)
-        super().acquire(*args, **kwargs)
+        result = super().acquire(*args, **kwargs)
         self._last_owner = t
         self._waiters.remove(t)
+        return result
 
     def get_waiting(self, cond=None):
         if cond is None:
