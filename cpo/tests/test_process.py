@@ -32,7 +32,6 @@ def test_process2():
 def test_close_channel():
     c1 = channel.OneOne()
     c2 = channel.OneOne()
-    result = 0
     def write():
         for x in range(500):
             c1 << x
@@ -43,6 +42,7 @@ def test_close_channel():
                 c2 << (~c1)**2
         except util.Closed:
             c2.close()
+    result = 0
     def read():
         nonlocal result
         try:

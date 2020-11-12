@@ -24,6 +24,9 @@ class Nanoseconds(int):
 class Milliseconds(int):
     pass
 
+def nano_time():
+    raise NotImplementedError
+
 class Stopped(Exception):
     pass
 

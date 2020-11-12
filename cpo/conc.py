@@ -53,6 +53,17 @@ class XRLock(RLockClass):
     def last_owner(self):
         return self._last_owner
 
+class NoLock(threading.Lock):
+
+    def acquire(self):
+        pass
+
+    def release(self):
+        pass
+
+    def locked(self) -> bool:
+        return False
+
 
 def get_thread_identity(thread: Optional[threading.Thread]):
     if thread is None:

@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import threading
+from abc import ABC
 from typing import Generic, Optional, TypeVar
 
 from .atomic import Atomic, AtomicNum
@@ -101,7 +102,7 @@ class OutPort(Generic[TO]):
         raise NotImplementedError
 
 T = TypeVar('T')
-class Chan(InPort[T], OutPort[T], Named, Debuggable):
+class Chan(InPort[T], OutPort[T], Named, Debuggable, ABC):
 
     def close(self) -> None:
         raise NotImplementedError
@@ -112,7 +113,10 @@ class Chan(InPort[T], OutPort[T], Named, Debuggable):
     def in_port_event(self, port_state: PortState) -> None:
         pass
 
-class SyncChan(Chan[T]):
+class SyncChan(Chan[T], ABC):
+    pass
+
+class SharedChan(Chan[T], ABC):
     pass
 
 class _OneOne(SyncChan[T]):
@@ -282,3 +286,81 @@ class _OneOneGenerator(NameGenerator, metaclass=Singleton):
         return _OneOne(name)
 
 OneOne = _OneOneGenerator()
+
+class _N2N(_OneOne, SharedChan):
+
+    def __init__(self, writers: int, readers: int,
+                 name: str, fair_out: bool, fair_in: bool) -> None:
+        super().__init__(name)
+        self.ws = AtomicNum(writers)
+        self.rs = AtomicNum(readers)
+        self.wm = threading.Lock() if fair_out else conc.NoLock()
+        self.rm = threading.Lock() if fair_in else conc.NoLock()
+
+    def close_out(self):
+        if self.ws.dec(1) == 0:
+            self.close()
+
+    def close_in(self):
+        if self.rs.dec(1) == 0:
+            self.close()
+
+    def __lshift__(self, value):
+        with self.wm:
+            super().__lshift__(value)
+
+    def write_before(self, ns: Nanoseconds, val: T) -> bool:
+        deadline = util.nano_time() + ns
+        if self.wm.acquire(timeout=float(ns)):
+            try:
+                remaining = deadline - util.nano_time()
+                if remaining > 0:
+                    return super().write_before(remaining, val)
+                else:
+                    return False
+            finally:
+                self.wm.release()
+        else:
+            return False
+
+    def __invert__(self):
+        with self.rm:
+            super().__invert__()
+
+    def extended_rendezvous(self, func):
+        with self.rm:
+            super().extended_rendezvous(func)
+
+    def read_before(self, ns: Nanoseconds) -> Optional[T]:
+        deadline = util.nano_time() + ns
+        if self.rm.acquire(timeout=float(ns)):
+            try:
+                remaining = deadline - util.nano_time()
+                if remaining > 0:
+                    return super.read_before(ns)
+                else:
+                    return None
+            finally:
+                self.rm.release()
+        else:
+            return None
+
+    def get_waiting(self) -> Sequence[threading.Thread]:
+        raise NotImplementedError
+
+    def show_state(self) -> None:
+        raise NotImplementedError
+
+
+class _N2NGenerator(NameGenerator, metaclass=Singleton):
+
+    def __init__(self):
+        super().__init__('N2N')
+
+    def __call__(self, writers: int, readers: int, name: str,
+                 fair_out: bool, fair_in: bool) -> _N2N:
+        if name is None:
+            name = self._new_name()
+        return _N2N(writers, readers, name, fair_out, fair_in)
+
+N2N = _N2NGenerator()
