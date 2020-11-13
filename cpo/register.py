@@ -7,6 +7,7 @@ import weakref
 
 from .atomic import AtomicCounter
 from . import conc
+from . import util
 
 class StateKey(int):
     pass
@@ -36,7 +37,7 @@ class Debuggable:
             del registered[self._key]
             self._key = -1
 
-    def show_state(self):
+    def show_state(self, file):
         raise NotImplementedError
 
     def get_waiting(self) -> Sequence[threading.Thread]:
@@ -59,10 +60,12 @@ class Debuggable:
 def waiting() -> Dict[threading.Thread, List[Debuggable]]:
     raise NotImplemented
 
-def show_threads(caption: str, threads: Sequence[threading.Thread]):
-    if len(threads)>0:
+def show_threads(file, caption: str, threads: Sequence[threading.Thread]):
+    if len(threads) > 0:
         c = ""
-        print(caption, end='')
+        util.synced_print(caption, file=file, end='')
         for thread in threads:
-            print(f'{c} {conc.get_thread_identity(thread)}', end='')
+            util.synced_print(
+                f'{c} {conc.get_thread_identity(thread)}',
+                file=file, end='')
             c = ","

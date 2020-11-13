@@ -1,7 +1,7 @@
 
 import inspect
 import threading
-from typing import Optional
+from typing import Optional, Type
 
 from .atomic import AtomicNum
 from . import util
@@ -21,7 +21,8 @@ class CountDownLatch:
     def wait(self):
         self._event.wait()
 
-class XRLock(util.get_ultimate_type(threading.RLock)):
+RLockClass: Type[threading.RLock] = util.get_ultimate_type(threading.RLock)
+class XRLock(RLockClass):
 
     def __init__(self):
         self._waiters = set()

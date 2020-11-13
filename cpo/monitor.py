@@ -1,7 +1,7 @@
 
 from abc import ABC
 import threading
-from typing import Optional
+from typing import Optional, Sequence
 
 from . import conc
 from .register import Debuggable
@@ -28,11 +28,11 @@ class Monitor(Debuggable, ABC):
             return f'Monitor({self.name})'
         return f'Monitor({self.name}) owned by {o} awaited by {w}'
 
-    def show_state(self):
+    def show_state(self, file):
         o = self.lock.last_owner()
         w = self.get_waiting()
         if not(o is None and len(w)==0):
-            util.synced_print(str(self))
+            util.synced_print(str(self), file=file)
 
     def has_state(self) -> bool:
         o = self.lock.last_owner()

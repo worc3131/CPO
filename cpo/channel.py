@@ -187,10 +187,11 @@ class _OneOne(SyncChan[T]):
         closed = "(CLOSED)" if self.closed.get() else ""
         return f'{self.name}: {closed} {self.current_state}'
 
-    def show_state(self) -> None:
-        synced_print(f"CHANNEL {self.name}: {self.name_generator._kind} ", end='')
-        if self.closed.get(): synced_print('(CLOSED) ', end='')
-        synced_print(self.current_state(), end='')
+    def show_state(self, file) -> None:
+        synced_print(f"CHANNEL {self.name}: {self.name_generator._kind} ",
+                     end='', file=file)
+        if self.closed.get(): synced_print('(CLOSED) ', end='', file=file)
+        synced_print(self.current_state(), end='', file=file)
 
     def __lshift__(self, value) -> None:
         self.check_open()
@@ -333,7 +334,7 @@ class _N2N(_OneOne[T]): #, SharedChan):
 
     def __invert__(self) -> T:
         with self.rm:
-            super().__invert__()
+            return super().__invert__()
 
     def extended_rendezvous(self, func):
         with self.rm:
@@ -345,7 +346,7 @@ class _N2N(_OneOne[T]): #, SharedChan):
             try:
                 remaining = deadline - util.nano_time()
                 if remaining > 0:
-                    return super.read_before(ns)
+                    return super().read_before(ns)
                 else:
                     return None
             finally:
@@ -356,7 +357,7 @@ class _N2N(_OneOne[T]): #, SharedChan):
     def get_waiting(self) -> Sequence[threading.Thread]:
         raise NotImplementedError
 
-    def show_state(self) -> None:
+    def show_state(self, file) -> None:
         raise NotImplementedError
 
 class _N2NGenerator(NameGenerator, metaclass=Singleton):
