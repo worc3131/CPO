@@ -21,6 +21,7 @@ class CountDownLatch:
     def wait(self):
         self._event.wait()
 
+# TODO find a better (but still safe) way of doing this
 RLockClass: Type[threading.RLock] = util.get_ultimate_type(threading.RLock)
 class XRLock(RLockClass):
 
