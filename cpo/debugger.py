@@ -96,12 +96,14 @@ CPO State {datetime.datetime.now()}
                     traceback.print_exc(file=file)  # TODO check this is the right call
                     print("--------------", file=file)
         elif waiting is None:
-            raise NotImplementedError
+            # state = thread.get_state() # nyi
+            # blocker = LockSupper.get_blocker(thread) # nyi
+            print(threads.get_thread_identity(thread), file=file)
 
+    def show_blocker(self, blocker, file):
+        raise NotImplementedError
 
-
-
-    def show_stack_trace(self, thread, out):
+    def show_stack_trace(self, thread, file):
         raise NotImplementedError
 
 

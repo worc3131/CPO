@@ -69,8 +69,8 @@ class Handle(util.Runnable):
 class PROC(metaclass=ABCMeta):
 
     def __init__(self):
-        self.__name: Optional[str] = None
-        self.__stack_size: Optional[int] = None
+        self._name: Optional[str] = None
+        self._stack_size: Optional[int] = None
 
     def __call__(self) -> None:
         raise NotImplementedError
@@ -81,20 +81,20 @@ class PROC(metaclass=ABCMeta):
     def __str__(self):
         return self.name
 
-    def with_stack_size(self, _stack_size: int) -> PROC:
-        self.__stack_size = _stack_size
+    def with_stack_size(self, stack_size: int) -> PROC:
+        self._stack_size = stack_size
         return self
 
     @property
     def stack_size(self) -> Optional[int]:
-        return self.__stack_size
+        return self._stack_size
 
     @property
     def name(self) -> Optional[str]:
-        return self.__name
+        return self._name
 
     def with_name(self, _name: str) -> PROC:
-        self.__name = _name
+        self._name = _name
         return self
 
     def __or__(self, other: PROC) -> PROC:
@@ -120,11 +120,13 @@ class Process:
 
 class Simple(PROC):
 
-    def __init__(self, body):
+    def __init__(self, body, name=None):
         super().__init__()
         self.body = body
-        self.__stack_size = 0
-        self.__name = "<anonymous>"
+        self._stack_size = 0
+        if name is None:
+            name = "<anonymous>"
+        self._name = name
 
     def fork(self) -> Handle:
         assert self.name is not None
@@ -152,11 +154,11 @@ SKIP = _SKIP()
 
 class Par(PROC):
 
-    def __init__(self, _name: str, procs: Sequence[PROC]) -> None:
+    def __init__(self, name: str, procs: Sequence[PROC]) -> None:
         super().__init__()
         self.procs = procs
-        self.__stack_size = 0
-        self.__name = _name
+        self._stack_size = 0
+        self._name = name
 
     def __call__(self):
         procs = self.procs

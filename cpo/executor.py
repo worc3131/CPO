@@ -112,3 +112,4 @@ elif poolKIND == 'UNPOOLED':
 else:
     raise ValueError('poolKIND should be SIZED, ADAPTIVE, CACHED or UNPOOLED. '
                      f'Not {poolKIND}')
+
