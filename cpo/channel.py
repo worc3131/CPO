@@ -10,6 +10,7 @@ from .atomic import Atomic, AtomicNum
 from . import conc
 from .name import Named, NameGenerator
 from .register import Debuggable
+from . import threads
 from . import util
 from .util import Nanoseconds, Singleton, synced_print
 
@@ -176,11 +177,11 @@ class _OneOne(SyncChan[T]):
         else:
             if ww is not None:
                 if self.full.get():
-                    result = f'!{self.buffer} from {conc.get_thread_identity(ww)}'
+                    result = f'!{self.buffer} from {threads.get_thread_identity(ww)}'
                 else:
-                    result = f'! from {conc.get_thread_identity(ww)}'
+                    result = f'! from {threads.get_thread_identity(ww)}'
             else:
-                result = f'? from {conc.get_thread_identity(wr)}'
+                result = f'? from {threads.get_thread_identity(wr)}'
         return result + self.finished_rw()
 
     def __str__(self) -> str:
@@ -198,14 +199,14 @@ class _OneOne(SyncChan[T]):
         current = threading.current_thread()
         last_writer: threading.Thread = self.writer.get_and_set(current)
         assert last_writer is None, f'c << {value} overtaking ' \
-                                f'[{conc.get_thread_identity(last_writer)}]' \
-                                f' in {conc.get_thread_identity(current)}'
+                                f'[{threads.get_thread_identity(last_writer)}]' \
+                                f' in {threads.get_thread_identity(current)}'
         self.buffer = value
         self.full.set(True)
         self.in_port_event(READYSTATE)
-        conc.unpark(self.reader.get())
+        threads.unpark(self.reader.get())
         while not self.closed.get() and self.full.get():
-            conc.park_current_thread()
+            threads.park_current_thread()
         if self.full.get():
             self.check_open()
         self.writer.set(None)
@@ -216,16 +217,16 @@ class _OneOne(SyncChan[T]):
         current = threading.current_thread()
         last_reader: threading.Thread = self.reader.get_and_set(current)
         assert last_reader is None, f'~c() overtaking ' \
-                                  f'[{util.get_thread_identity(last_reader)}]' \
-                                  f' in {util.get_thread_identity(current)}'
+                                  f'[{threads.get_thread_identity(last_reader)}]' \
+                                  f' in {threads.get_thread_identity(current)}'
         self.out_port_event(READYSTATE)
         while not self.closed.get() and not self.full.get():
-            conc.park_current_thread()
+            threads.park_current_thread()
         self.check_open()
         result = self.buffer
         self.buffer = None
         self.full.set(False)
-        conc.unpark(self.writer.get_and_set(None))
+        threads.unpark(self.writer.get_and_set(None))
         self.reader.set(None)
         self.finished_read()
         return result
@@ -234,8 +235,8 @@ class _OneOne(SyncChan[T]):
         if not self.closed.get_and_set(True):
             self.out_port_event(CLOSEDSTATE)
             self.in_port_event(CLOSEDSTATE)
-            conc.unpark(self.reader.get_and_set(None))
-            conc.unpark(self.writer.get_and_set(None))
+            threads.unpark(self.reader.get_and_set(None))
+            threads.unpark(self.writer.get_and_set(None))
             self.unregister()
 
     def extended_rendezvous(self, func):
@@ -243,16 +244,16 @@ class _OneOne(SyncChan[T]):
         current = threading.current_thread()
         last_reader: threading.Thread = self.reader.get_and_set(current)
         assert last_reader is None, f'~c(f) overtaking ' \
-                                  f'[{util.get_thread_identity(last_reader)}]' \
-                                  f' in {util.get_thread_identity(current)}'
+                                  f'[{threads.get_thread_identity(last_reader)}]' \
+                                  f' in {threads.get_thread_identity(current)}'
         self.out_port_event(READYSTATE)
         while not self.closed.get() and not self.full.get():
-            util.park_current_thread()
+            threads.park_current_thread()
         self.check_open()
         result = func(self.buffer)
         self.buffer = None
         self.full.set(False)
-        util.unpark(self.writer.get_and_set(null))
+        threads.unpark(self.writer.get_and_set(null))
         self.reader.set(None)
         self.finished_read()
         return result

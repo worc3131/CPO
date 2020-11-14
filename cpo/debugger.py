@@ -20,6 +20,7 @@ class DEBUGGER:
             self.thread = threading.Thread(
                 name=str(self),
                 target=self.run_server,
+                daemon=True,
             )
             self.thread.start()
             util.synced_print(str(self) + ': ACTIVE')
@@ -53,17 +54,19 @@ class DEBUGGER:
                 line = in_.readline()
                 header.append(line)
 
-            print("HTTP/1. 201", file=out)
-            print("Content-Type: text/plain; charset=UTF-8", file=out)
-            print("Server-name: CPO debugger", file=out)
-            print("", file=out)
-            print(f"CPO State {datetime.datetime.now()}", file=out)
+            print(
+f"""HTTP/1.1 201
+Content-Type: text/plain; charset=UTF-8
+Server-name: CPO debugger
+
+CPO State {datetime.datetime.now()}
+""", file=out)
             self.show_cso_state(file=out)
 
             out.flush()
+            out.close()
             conn.shutdown(0)
             conn.close()
-        # TODO deal with exception
         finally:
             if conn is not None:
                 conn.close()

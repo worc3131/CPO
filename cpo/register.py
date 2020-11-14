@@ -1,8 +1,9 @@
 
 from __future__ import annotations
 
+import collections
 import threading
-from typing import Dict, List, Sequence
+from typing import Dict, List, Optional, Sequence
 import weakref
 
 from .atomic import AtomicCounter
@@ -16,7 +17,7 @@ stateKey = AtomicCounter()
 
 NONEWAITING: List[threading.Thread] = []
 
-registered = {}
+registered: Dict[int, weakref.ReferenceType[Debuggable]] = {}
 
 def register(obj: Debuggable) -> StateKey:
     key = next(stateKey)
@@ -58,7 +59,14 @@ class Debuggable:
         return True
 
 def waiting() -> Dict[threading.Thread, List[Debuggable]]:
-    raise NotImplemented
+    result = collections.defaultdict(list)
+    for _, ref in registered.items():
+        obj: Optional[Debuggable] = ref()
+        if obj is not None:
+            for thread in obj.get_waiting():
+                if thread is not None:
+                    result[thread].append(obj)
+    return result
 
 def show_threads(file, caption: str, threads: Sequence[threading.Thread]):
     if len(threads) > 0:

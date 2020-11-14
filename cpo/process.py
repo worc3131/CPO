@@ -8,16 +8,11 @@ from typing import List, Optional, Sequence, Union
 
 from .atomic import AtomicCounter
 from . import conc
+from . import executor
+from . import threads
 from . import util
 
 Latch = conc.CountDownLatch
-
-print('TODO change executor!!')
-from concurrent.futures import ThreadPoolExecutor
-from . import executor
-pool = ThreadPoolExecutor(max_workers=1024)
-_executor = executor.ThreadPooledExecutor(False, pool)
-
 
 class Handle(util.Runnable):
     # Handle on a CSO process
@@ -43,8 +38,9 @@ class Handle(util.Runnable):
         raise Exception('Not possible in python..')
 
     def start(self) -> None:
-        assert _executor is not None
-        _executor.execute(self, self.stack_size)
+        assert executor.executor is not None
+        # widgeter.widgetfactor(widget).widget(widget=widget)
+        executor.executor.execute(self, self.stack_size)
 
     def join(self) -> None:
         if self.latch is not None:
