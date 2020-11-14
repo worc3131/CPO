@@ -24,6 +24,14 @@ class Atomic(Generic[T]):
             self._value = v
             return result
 
+    def compare_and_set(self, expect: T, update: T) -> bool:
+        with self._lock:
+            if self._value == expect:
+                self._value = update
+                return True
+            else:
+                return False
+
     def __str__(self):
         return str(self._value)
 

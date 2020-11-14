@@ -281,7 +281,7 @@ class _OneOne(SyncChan[T]):
         raise NotImplementedError
 
 
-class _OneOneGenerator(NameGenerator, metaclass=Singleton):
+class _OneOneFactory(NameGenerator, metaclass=Singleton):
 
     def __init__(self):
         super().__init__('OneOne')
@@ -291,7 +291,7 @@ class _OneOneGenerator(NameGenerator, metaclass=Singleton):
             name = self._new_name()
         return _OneOne(name)
 
-OneOne = _OneOneGenerator()
+OneOne = _OneOneFactory()
 
 class _N2N(SharedChan[T], _OneOne[T]):
 
@@ -374,7 +374,7 @@ class _N2N(SharedChan[T], _OneOne[T]):
             print(f'\n\tOutPort queue: [{ids}]')
 
 
-class _N2NGenerator(NameGenerator, metaclass=Singleton):
+class _N2NFactory(NameGenerator, metaclass=Singleton):
 
     def __init__(self):
         super().__init__('N2N')
@@ -385,7 +385,7 @@ class _N2NGenerator(NameGenerator, metaclass=Singleton):
             name = self._new_name()
         return _N2N(writers, readers, name, fair_out, fair_in)
 
-N2N = _N2NGenerator()
+N2N = _N2NFactory()
 
 def ManyOne(writers: int = 0, name: Optional[str] = None):
     if name is None:
@@ -544,7 +544,7 @@ class _N2NBuf(SharedChan[T]):
         except queue.Full:
             return False
 
-class _N2NBufGenerator(NameGenerator, metaclass=Singleton):
+class _N2NBufFactory(NameGenerator, metaclass=Singleton):
 
     def __init__(self):
         super().__init__('N2NBuf')
@@ -555,7 +555,7 @@ class _N2NBufGenerator(NameGenerator, metaclass=Singleton):
             name = self._new_name()
         return _N2NBuf(size, writers, readers, name)
 
-N2NBuf = _N2NBufGenerator()
+N2NBuf = _N2NBufFactory()
 
 def OneOneBuf(size: int, name: Optional[str] = None):
     if name is None:

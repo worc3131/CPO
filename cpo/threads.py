@@ -1,5 +1,6 @@
 
 import threading
+import time
 from typing import Optional, Sequence
 
 from .util import Nanoseconds
@@ -29,10 +30,25 @@ def park_current_thread():
     parking_lot[ident].clear()
     del parking_lot[ident]  # TODO remove this safety check and the assert above
 
+def park_current_threads_nanos(ns: Nanoseconds):
+    done = False
+    ident = threading.get_ident()
+    def alarm():
+        time.sleep(ns.to_seconds())
+        if not done:
+            unpark_ident(ident)
+    threading.Thread(target=alarm).start()
+    park_current_thread()
+    done = True
+
 def unpark(blocker: Optional[threading.Thread]):
     if blocker is None:
         return
-    ident = blocker.ident
+    unpark_ident(blocker.ident)
+
+def unpark_ident(ident: Optional[int]):
+    if ident is None:
+        return
     assert ident in parking_lot  # TODO remove assert
     parking_lot[ident].set()
 
