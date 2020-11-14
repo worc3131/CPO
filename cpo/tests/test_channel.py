@@ -86,6 +86,10 @@ def test_manymany():
     p = p | process.ParSyntax([process.Simple(read(i))       for i in range(5)])
     p()
     # the below tests could fail as a result of random chance
+    # none lost
+    flat = [y for x in result for y in x]
+    assert len(flat) == 2500
+    assert len(set(flat)) == 2500
     # none starved
     assert not any(len(x) == 0 for x in result)
     # not all equal length
