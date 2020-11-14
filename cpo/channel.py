@@ -405,7 +405,7 @@ def ManyMany(name: Optional[str] = None):
 class _N2NBuf(SharedChan[T]):
 
     def __init__(self, size: int, writers: int, readers: int, name: str):
-        SharedChan.__init__()
+        SharedChan.__init__(self)
         self.set_name(name)
         self.size = size
         self.ws = AtomicNum(writers)
@@ -430,6 +430,10 @@ class _N2NBuf(SharedChan[T]):
         if self.is_full():
             return UNKNOWNSTATE
         return READYSTATE
+
+    @property
+    def name_generator(self) -> NameGenerator:
+        return N2NBuf
 
     def finished_read(self):
         return self.reads.inc(1)

@@ -99,3 +99,38 @@ def test_manymany():
     # not just from one inputter
     assert not any(len({y//1000 for y in x}) == 1 for x in result)
 
+def test_oneonebuf():
+    c = channel.OneOneBuf(1)
+    c << 1
+    assert ~c == 1
+    write_done = False
+    def write():
+        nonlocal write_done
+        c << 2
+        c << 3
+        write_done = True
+    t = threading.Thread(target=write)
+    t.start()
+    time.sleep(0.5)
+    assert not write_done
+    assert ~c == 2
+    time.sleep(0.5)
+    assert write_done
+    assert ~c == 3
+    read_done = False
+    def read():
+        nonlocal read_done
+        assert ~c == 4
+        assert ~c == 5
+        read_done = True
+    t = threading.Thread(target=read)
+    t.start()
+    time.sleep(0.5)
+    assert not read_done
+    c << 4
+    time.sleep(0.5)
+    assert not read_done
+    c << 5
+    time.sleep(0.5)
+    assert read_done
+
