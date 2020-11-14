@@ -6,7 +6,7 @@ from .util import Nanoseconds
 
 main_thread = threading.current_thread()
 
-def get_active() -> Sequence[threading.Thread]:
+def get_active_threads() -> Sequence[threading.Thread]:
     return threading.enumerate()
 
 def get_thread_identity(thread: Optional[threading.Thread]):

@@ -2,9 +2,12 @@
 import datetime
 import socket
 import threading
+import traceback
 
 from . import config
+from . import register
 from . import server
+from . import threads
 from . import util
 
 class DEBUGGER:
@@ -72,9 +75,31 @@ CPO State {datetime.datetime.now()}
                 conn.close()
 
     def show_cso_state(self, file):
-        print('Hello', file=file)
-        return  # TODO
-        raise NotImplementedError
+        active_threads = threads.get_active_threads()
+        waiting = register.waiting()
+        registered = register.registered
+
+        for thread in active_threads:
+            self.show_thread_state(file, thread, waiting.get(thread, None))
+
+    def show_thread_state(self, file, thread: threading.Thread, waiting):
+        if waiting is not None:
+            for thing in waiting:
+                print(f'THREAD {threads.get_thread_identity(thread)}',
+                      end='', file=file)
+                try:
+                    thing.show_state(file)
+                    print('', file=file)
+                except Exception as e:
+                    print("Exception while showing the state "
+                          "of a registered component", file=file)
+                    traceback.print_exc(file=file)  # TODO check this is the right call
+                    print("--------------", file=file)
+        elif waiting is None:
+            raise NotImplementedError
+
+
+
 
     def show_stack_trace(self, thread, out):
         raise NotImplementedError
