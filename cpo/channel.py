@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import threading
 from abc import ABC
-import functools
+import queue
 from typing import Generic, Optional, Sequence, TypeVar
 
 from .atomic import Atomic, AtomicNum
@@ -293,7 +293,7 @@ class _OneOneGenerator(NameGenerator, metaclass=Singleton):
 
 OneOne = _OneOneGenerator()
 
-class _N2N(_OneOne[T]): #, SharedChan):
+class _N2N(SharedChan[T], _OneOne[T]):
 
     def __init__(self, writers: int, readers: int,
                  name: str, fair_out: bool, fair_in: bool) -> None:
@@ -402,3 +402,158 @@ def ManyMany(name: Optional[str] = None):
         name = N2N._new_name('ManyMany')
     return N2N(name=name)
 
+class _N2NBuf(SharedChan[T]):
+
+    def __init__(self, size: int, writers: int, readers: int, name: str):
+        SharedChan.__init__()
+        self.set_name(name)
+        self.size = size
+        self.ws = AtomicNum(writers)
+        self.rs = AtomicNum(readers)
+        self.input_closed = Atomic(False)
+        self.output_closed = Atomic(False)
+        self.reads = AtomicNum(0)
+        self.writes = AtomicNum(0)
+        self.queue = queue.Queue(maxsize=size)
+        self.register()
+
+    def in_port_state(self) -> PortState:
+        if self.input_closed.get():
+            return CLOSEDSTATE
+        if self.is_empty():
+            return UNKNOWNSTATE
+        return READYSTATE
+
+    def out_port_state(self) -> PortState:
+        if self.output_closed.get():
+            return CLOSEDSTATE
+        if self.is_full():
+            return UNKNOWNSTATE
+        return READYSTATE
+
+    def finished_read(self):
+        return self.reads.inc(1)
+
+    def finished_write(self):
+        return self.writes.inc(1)
+
+    def finished_RW(self):
+        return f'(READ {self.reads.get()}, WRITTEN {self.writes.get()})'
+
+    def state(self, port: str, closed: bool) -> str:
+        return f'{port} (CLOSED), ' if closed else ''
+
+    def __str__(self):
+        return f"CHANNEL {self.name}: {self.name_generator._kind} " \
+               f"{self.state('OutPort', self.output_closed.get())} " \
+               f"{self.state('InPort', self.input_closed.get())}" \
+               f"(writers={self.ws.get()}, readers={self.rs.get()}) " \
+               f"size={self.size}, length={len(self.queue)}) " \
+               f"{self.finished_RW()}"
+
+    def show_state(self, file) -> None:
+        print(str(self), end='', file=file)
+
+    def close(self) -> None:
+        self.output_closed.set(True)
+        self.input_closed.set(True)
+        self.out_port_event(CLOSEDSTATE)
+        self.in_port_event(CLOSEDSTATE)
+        # clear the queue
+        try:
+            while True:
+                self.queue.get_nowait()
+        except queue.Empty:
+            pass
+        self.unregister()
+
+    def close_out(self) -> None:
+        if self.ws.dec(1) == 0:
+            self.output_closed.set(True)
+            if self.is_empty:
+                self.close()
+
+
+    def close_in(self):
+        if self.rs.dec(1) == 0:
+            self.input_closed.set(True)
+            self.out_port_event(CLOSEDSTATE)
+            self.close()
+
+
+    def can_input(self) -> bool:
+        return not (self.output_closed.get() and self.is_empty())
+
+    def can_output(self) -> bool:
+        return not self.input_closed.get()
+
+    def is_empty(self) -> bool:
+        return self.queue.empty()
+
+    def is_full(self) -> bool:
+        return self.queue.full()
+
+    def __invert__(self) -> T:
+        if self.input_closed.get():
+            raise util.Closed(self.name)
+        if self.output_closed.get() and self.is_empty():
+            self.close()
+            raise util.Closed(self.name)
+        try:
+            self.out_port_event(READYSTATE)
+            r = self.queue.get()
+            self.finished_read()
+            return r
+        except queue.Empty:
+            return None
+        except InterruptedError:
+            raise util.Closed(self.name)
+
+    def read_before(self, ns: Nanoseconds) -> Optional[T]:
+        if self.input_closed.get():
+            raise util.Closed(self.name)
+        if self.output_closed.get() and self.is_empty():
+            self.close()
+            raise util.Closed(self.name)
+        self.out_port_event(READYSTATE)
+        return self.queue.get(timeout=ns.to_seconds())
+
+    def __lshift__(self, value: T) -> T:
+        if self.output_closed.get() or self.input_closed.get():
+            raise util.Closed(self)
+        try:
+            self.queue.put(value)
+            self.in_port_event(READYSTATE)
+            self.finished_write()
+        except InterruptedError:
+            raise util.Closed(self.name)
+        if self.input_closed.get():
+            raise util.Closed(self.name)
+        return value
+
+    def write_before(self, ns: Nanoseconds, value: T) -> bool:
+        if self.output_closed.get() or self.input_closed.get():
+            raise util.Closed(self.name)
+        try:
+            self.queue.put(value, timeout=ns.to_seconds())
+            return True
+        except queue.Full:
+            return False
+
+class _N2NBufGenerator(NameGenerator, metaclass=Singleton):
+
+    def __init__(self):
+        super().__init__('N2NBuf')
+
+    def __call__(self, size: int = 0, writers: int = 0, readers: int = 0,
+                 name: Optional[str] = None) -> _N2NBuf:
+        if name is None:
+            name = self._new_name()
+        return _N2NBuf(size, writers, readers, name)
+
+N2NBuf = _N2NBufGenerator()
+
+def OneOneBuf(size: int, name: Optional[str] = None):
+    if name is None:
+        name = N2N._new_name('OneOneBuf')
+    return N2NBuf(size=size, writers=1, readers=1, name=name)
