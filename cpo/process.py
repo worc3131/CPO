@@ -100,7 +100,9 @@ class PROC(metaclass=ABCMeta):
     def __or__(self, other: PROC) -> PROC:
         return ParSyntax([other, self])
 
-
+# lock for printing exceptions, to stop lots of exceptions being
+# overwritten on touch of each other
+_exception_lock = threading.Lock()
 class Process:
     # NOTE confusingly we will refer to processes when these are actually run
     # as threads. Process refers to a CSO process.
@@ -114,8 +116,9 @@ class Process:
 
     @staticmethod
     def handle_exception(name, exc):
-        util.synced_print(f"Process {name} terminated by throwing {exc}")
-        traceback.print_tb(exc.__traceback__)
+        with _exception_lock:
+            util.synced_print(f"Process {name} terminated by throwing {exc}")
+            traceback.print_tb(exc.__traceback__)
 
 
 class Simple(PROC):

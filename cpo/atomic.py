@@ -24,6 +24,8 @@ class Atomic(Generic[T]):
             self._value = v
             return result
 
+    def __str__(self):
+        return str(self._value)
 
 TNum = TypeVar('TNum', int, float)
 class AtomicNum(Atomic[TNum]):

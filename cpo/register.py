@@ -41,7 +41,7 @@ class Debuggable:
     def show_state(self, file):
         raise NotImplementedError
 
-    def get_waiting(self) -> Sequence[threading.Thread]:
+    def get_waiting(self) -> List[threading.Thread]:
         return NONEWAITING.copy()
 
     def with_debugger(self, condition, func):

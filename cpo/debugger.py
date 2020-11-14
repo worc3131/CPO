@@ -17,6 +17,7 @@ class DEBUGGER:
         self.host = 'localhost'
         self.port = config.get('port', self.debug_port)
         self.SUPPRESS = config.get('suppress', '')
+        self.monitored = {}
         if self.port >= 0:
             self.socket = server.create_server(self.host, self.port)
             self.port = self.socket.getsockname()[1]
@@ -30,6 +31,15 @@ class DEBUGGER:
 
     def __str__(self):
         return f'Debugger(http://{self.host}:{self.port})'
+
+    def monitor(self, name, state):
+        self.monitored[name] = state
+
+    def remove_monitor(self, name):
+        del self.monitored[name]
+
+    def clear_monitor(self, name):
+        self.monitored = {}
 
     def run_server(self):
         try:
@@ -79,8 +89,35 @@ CPO State {datetime.datetime.now()}
         waiting = register.waiting()
         registered = register.registered
 
+        print(f'{len(active_threads)-2} threads active')  #
         for thread in active_threads:
             self.show_thread_state(file, thread, waiting.get(thread, None))
+
+        print('', file=file)
+        if len(self.monitored) > 0:
+            print('== Monitored Expressions ==', file=file)
+            for name, state in self.monitored.items():
+                print(f'{name}: ', end='', file=file)
+                if state is None:
+                    print('<not available>', file=file)
+                else:
+                    print(state(), file=file)
+
+        announced = False
+        for _, ref in registered.items():
+            obj: register.Debuggable = ref()
+            if obj is not None:
+                if not announced:
+                    announced = True
+                    print('== Registered Objects ==', file=file)
+                try:
+                    if obj.has_state:
+                        print('', file=file)
+                    obj.show_state(file=file)
+                except Exception as e:
+                    print('Exception while determining state'
+                          ' of a registed object', file=file)
+                    traceback.print_exc(file=file)  # TODO check this is the right call
 
     def show_thread_state(self, file, thread: threading.Thread, waiting):
         if waiting is not None:
@@ -96,8 +133,8 @@ CPO State {datetime.datetime.now()}
                     traceback.print_exc(file=file)  # TODO check this is the right call
                     print("--------------", file=file)
         elif waiting is None:
-            # state = thread.get_state() # nyi
-            # blocker = LockSupper.get_blocker(thread) # nyi
+            # state = thread.get_state() # nyi TODO
+            # blocker = LockSupper.get_blocker(thread) # nyi TODO
             print(threads.get_thread_identity(thread), file=file)
 
     def show_blocker(self, blocker, file):
@@ -105,8 +142,4 @@ CPO State {datetime.datetime.now()}
 
     def show_stack_trace(self, thread, file):
         raise NotImplementedError
-
-
-
-
 

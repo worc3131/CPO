@@ -67,9 +67,6 @@ class InPort(Generic[TI]):
     def nothing(self) -> Optional[TI]:
         return None
 
-    def name(self) -> str:
-        raise NotImplementedError
-
     def in_port_state(self) -> PortState:
         raise NotImplementedError
 
@@ -86,7 +83,7 @@ class InPortFunc(Generic[TI]):
 TO = TypeVar('TO')
 class OutPort(Generic[TO]):
 
-    def __lshift__(self, val: TO) -> None:
+    def __lshift__(self, val: TO) -> TO:
         raise NotImplementedError
 
     def write_before(self, nswait: Nanoseconds, value: TO) -> bool:
@@ -96,9 +93,6 @@ class OutPort(Generic[TO]):
         raise NotImplementedError
 
     def can_output(self) -> bool:
-        raise NotImplementedError
-
-    def name(self) -> str:
         raise NotImplementedError
 
     def out_port_state(self) -> PortState:
@@ -177,11 +171,12 @@ class _OneOne(SyncChan[T]):
         else:
             if ww is not None:
                 if self.full.get():
-                    result = f'!{self.buffer} from {threads.get_thread_identity(ww)}'
+                    result = f'write ({self.buffer}) from' \
+                             f' {threads.get_thread_identity(ww)}'
                 else:
-                    result = f'! from {threads.get_thread_identity(ww)}'
+                    result = f'write from {threads.get_thread_identity(ww)}'
             else:
-                result = f'? from {threads.get_thread_identity(wr)}'
+                result = f'read from {threads.get_thread_identity(wr)}'
         return result + self.finished_rw()
 
     def __str__(self) -> str:
@@ -194,7 +189,7 @@ class _OneOne(SyncChan[T]):
         if self.closed.get(): synced_print('(CLOSED) ', end='', file=file)
         synced_print(self.current_state(), end='', file=file)
 
-    def __lshift__(self, value) -> None:
+    def __lshift__(self, value: T) -> T:
         self.check_open()
         current = threading.current_thread()
         last_writer: threading.Thread = self.writer.get_and_set(current)
@@ -211,8 +206,9 @@ class _OneOne(SyncChan[T]):
             self.check_open()
         self.writer.set(None)
         self.finished_write()
+        return value
 
-    def __invert__(self):
+    def __invert__(self) -> T:
         self.check_open()
         current = threading.current_thread()
         last_reader: threading.Thread = self.reader.get_and_set(current)
@@ -304,8 +300,9 @@ class _N2N(_OneOne[T]): #, SharedChan):
         super().__init__(name)
         self.ws = AtomicNum(writers)
         self.rs = AtomicNum(readers)
-        self.wm = threading.Lock() if fair_out else conc.NoLock()
-        self.rm = threading.Lock() if fair_in else conc.NoLock()
+        self.wm = conc.TrackedFairRLock() if fair_out else conc.TrackedRLock()
+        self.rm = conc.TrackedFairRLock() if fair_in else conc.TrackedRLock()
+
 
     def close_out(self):
         if self.ws.dec(1) == 0:
@@ -315,9 +312,10 @@ class _N2N(_OneOne[T]): #, SharedChan):
         if self.rs.dec(1) == 0:
             self.close()
 
-    def __lshift__(self, value: T):
+    def __lshift__(self, value: T) -> T:
         with self.wm:
             super().__lshift__(value)
+        return value
 
     def write_before(self, ns: Nanoseconds, val: T) -> bool:
         deadline = util.nano_time() + ns
@@ -356,10 +354,25 @@ class _N2N(_OneOne[T]): #, SharedChan):
             return None
 
     def get_waiting(self) -> Sequence[threading.Thread]:
-        raise NotImplementedError
+        return super().get_waiting() #+ \ TODO
+               #self.wm.get_waiting() + \
+               #self.rm.get_waiting()
 
     def show_state(self, file) -> None:
-        raise NotImplementedError
+        ww = self.wm.num_waiting()
+        rw = self.rm.num_waiting()
+        super().show_state(file)
+        print(f'\n\t({self.ws} writers and'
+              f' {self.rs} readers remaining)', file=file)
+        if rw > 0:
+            ids = ', '.join(threads.get_thread_identity(t)
+                            for t in self.rm.get_waiting())
+            print(f'\n\tInPort queue: [{ids}]')
+        if ww > 0:
+            ids = ', '.join(threads.get_thread_identity(t)
+                            for t in self.wm.get_waiting())
+            print(f'\n\tOutPort queue: [{ids}]')
+
 
 class _N2NGenerator(NameGenerator, metaclass=Singleton):
 
