@@ -1,6 +1,8 @@
 
 from abc import ABC
 
+from . import semaphore
+
 class Lock(ABC):
 
     def lock(self) -> None:
@@ -18,4 +20,12 @@ class Lock(ABC):
     def with_lock(self, f):
         with self:
             f()
+
+class SimpleLock(Lock, semaphore.BooleanSemaphore):
+
+    def lock(self) -> None:
+        self.acquire()
+
+    def unlock(self) -> None:
+        self.release()
 
