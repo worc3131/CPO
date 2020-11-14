@@ -1,5 +1,6 @@
 
 from abc import ABCMeta
+import time
 
 import inspect
 import threading
@@ -27,7 +28,7 @@ class Milliseconds(int):
     pass
 
 def nano_time():
-    raise NotImplementedError
+    return time.time_ns()
 
 class Stopped(Exception):
     pass

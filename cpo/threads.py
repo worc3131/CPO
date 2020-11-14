@@ -49,8 +49,9 @@ def unpark(blocker: Optional[threading.Thread]):
 def unpark_ident(ident: Optional[int]):
     if ident is None:
         return
-    assert ident in parking_lot  # TODO remove assert
-    parking_lot[ident].set()
+    pl = parking_lot.get(ident)
+    if pl is not None:
+        pl.set()
 
 def park_until_deadline_or(blocker, deadline: Nanoseconds, condition) -> Nanoseconds:
     raise NotImplementedError
