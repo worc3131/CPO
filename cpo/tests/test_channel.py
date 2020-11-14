@@ -134,3 +134,31 @@ def test_oneonebuf():
     time.sleep(0.5)
     assert read_done
 
+def test_n2nbuf():
+    c = channel.N2NBuf(size=2, writers=3, readers=2)
+    written = [False]*3
+    def writer(i):
+        c << i
+        written[i] = True
+    for i in range(3):
+        threading.Thread(target=writer, args=(i,)).start()
+    time.sleep(0.5)
+    assert sum(written) == 2
+    res = [~c]
+    time.sleep(0.5)
+    assert sum(written) == 3
+    res += [~c, ~c]
+    assert(sorted(res) == [0, 1, 2])
+    read = [0]*2
+    def reader(i):
+        read[i] = ~c
+    for i in range(2):
+        threading.Thread(target=reader, args=(i,)).start()
+    time.sleep(0.5)
+    assert sorted(read) == [0, 0]
+    c << 10
+    time.sleep(0.5)
+    assert sorted(read) == [0, 10]
+    c << 20
+    time.sleep(0.5)
+    assert sorted(read) == [10, 20]
