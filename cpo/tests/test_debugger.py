@@ -1,5 +1,4 @@
 
-import sys
 import time
 
 from cpo import channel, process, debugger
@@ -19,8 +18,8 @@ def test_runs():
         return 'hello from test_debugger'
     d.monitor('test', hello)
     def solve():
-        time.sleep(2)
-        d.show_cso_state(sys.stdout)
+        time.sleep(1)
+        d.show_cso_state()
         forks[0] << -1
         ~forks[0]
         chan << -1

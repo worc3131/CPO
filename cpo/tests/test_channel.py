@@ -4,7 +4,7 @@ import time
 
 import pytest
 
-from cpo import channel, process
+from cpo import channel, debugger, process, util
 
 @pytest.fixture
 def oneone():
@@ -59,7 +59,6 @@ def test_oneone_strings(oneone):
     assert ~c == "hello world"
 
 def test_manymany():
-    return  # TODO
     c = channel._N2N(5, 5, "", False, False)
 
     def write(i):
@@ -71,18 +70,28 @@ def test_manymany():
 
     def read(i):
         def f():
-            while True:
-                result[i].append(~c)
+            try:
+                while True:
+                    result[i].append(~c)
+            except util.Closed:
+                pass
         return f
 
     def kill():
-        time.sleep(3)
+        time.sleep(1)
         c.close()
 
     p = process.ParSyntax([process.Simple(kill)])
     p = p | process.ParSyntax([process.Simple(write(i*1000)) for i in range(5)])
     p = p | process.ParSyntax([process.Simple(read(i))       for i in range(5)])
     p()
-    import pdb; pdb.set_trace()  # TODO - add asserts
-
+    # the below tests could fail as a result of random chance
+    # none starved
+    assert not any(len(x) == 0 for x in result)
+    # not all equal length
+    assert not all(len(x) == 500 for x in result)
+    # not a sorted output
+    assert not any(x == sorted(x) for x in result)
+    # not just from one inputter
+    assert not any(len({y//1000 for y in x}) == 1 for x in result)
 

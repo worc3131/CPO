@@ -54,6 +54,5 @@ def test_close_channel():
     p2 = process.Simple(square)
     p3 = process.Simple(read)
     p = p1 | p2 | p3
-    debugger.DEBUGGER()
     p()
     assert result == sum(x*x for x in range(500))

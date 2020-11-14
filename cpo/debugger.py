@@ -1,6 +1,7 @@
 
 import datetime
 import socket
+import sys
 import threading
 import traceback
 
@@ -84,7 +85,9 @@ CPO State {datetime.datetime.now()}
             if conn is not None:
                 conn.close()
 
-    def show_cso_state(self, file):
+    def show_cso_state(self, file=None):
+        if file is None:
+            file = sys.stdout
         active_threads = threads.get_active_threads()
         waiting = register.waiting()
         registered = register.registered
