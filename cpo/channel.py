@@ -4,7 +4,7 @@ from __future__ import annotations
 import threading
 from abc import ABC
 import queue
-from typing import Generic, Optional, Sequence, TypeVar
+from typing import Generic, List, Optional, TypeVar
 
 from .atomic import Atomic, AtomicNum
 from . import conc
@@ -45,7 +45,7 @@ READYSTATE = _READYSTATE()
 TI = TypeVar('TI')
 class InPort(Generic[TI]):
 
-    def __invert__(self) -> TI:
+    def __invert__(self) -> Optional[TI]:
         raise NotImplementedError
 
     def read_before(self, ns: Nanoseconds) -> Optional[TI]:
@@ -83,7 +83,7 @@ class InPortFunc(Generic[TI]):
 TO = TypeVar('TO')
 class OutPort(Generic[TO]):
 
-    def __lshift__(self, val: TO) -> TO:
+    def __lshift__(self, val: TO) -> Optional[TO]:
         raise NotImplementedError
 
     def write_before(self, nswait: Nanoseconds, value: TO) -> bool:
@@ -353,10 +353,10 @@ class _N2N(SharedChan[T], _OneOne[T]):
         else:
             return None
 
-    def get_waiting(self) -> Sequence[threading.Thread]:
-        return super().get_waiting() #+ \ TODO
-               #self.wm.get_waiting() + \
-               #self.rm.get_waiting()
+    def get_waiting(self) -> List[threading.Thread]:
+        return super().get_waiting() + \
+               self.wm.get_waiting() + \
+               self.rm.get_waiting()
 
     def show_state(self, file) -> None:
         ww = self.wm.num_waiting()
