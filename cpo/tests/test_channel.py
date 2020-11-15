@@ -4,7 +4,7 @@ import time
 
 import pytest
 
-from cpo import channel, debugger, process, util
+from cpo import *
 
 @pytest.fixture
 def oneone():

@@ -7,7 +7,7 @@ from .name import NameGenerator
 from . import semaphore
 from . import threads
 from . import util
-from .util import Singleton
+from .util import Singleton, Nanoseconds
 
 class _Flag(semaphore.Semaphore):
 

@@ -21,7 +21,7 @@ class Lock(ABC):
         with self:
             f()
 
-class SimpleLock(Lock, semaphore.BooleanSemaphore):
+class SimpleLock(Lock, semaphore._BooleanSemaphore):
 
     def lock(self) -> None:
         self.acquire()

@@ -24,6 +24,7 @@ class Event:
 class Logger(Debuggable):
 
     def __init__(self, name: str, log_size: int, mask: int = 0xFFFFFFFF):
+        super().__init__()
         self.name = name
         self.log_size = log_size
         self.mask = mask
