@@ -1,4 +1,5 @@
 
+from .atomic import Atomic, AtomicNum, AtomicCounter
 from .barrier import Barrier, CombiningBarrier, AndBarrier, OrBarrier
 from .channel import OneOne, N2N, OneMany, ManyOne, ManyMany, OneOneBuf, N2NBuf
 from .debugger import DEBUGGER

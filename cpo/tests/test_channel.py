@@ -2,23 +2,17 @@
 import threading
 import time
 
-import pytest
-
 from cpo import *
 
-@pytest.fixture
-def oneone():
-    return channel.OneOne('oneone_channel')
-
-def test_oneone(oneone):
-    c = oneone
+def test_oneone():
+    c = OneOne('oneone_channel')
     def write():
         c << 2
     threading.Thread(target=write).start()
     assert ~c == 2
 
-def test_oneone_write_waits(oneone):
-    c = oneone
+def test_oneone_write_waits():
+    c = OneOne('oneone_channel')
     def write():
         c << 3
     t = threading.Thread(target=write)
@@ -29,8 +23,8 @@ def test_oneone_write_waits(oneone):
     time.sleep(0.1)
     assert not t.is_alive()
 
-def test_oneone_read_waits(oneone):
-    c = oneone
+def test_oneone_read_waits():
+    c = OneOne('oneone_channel')
     def read():
         ~c
     t = threading.Thread(target=read)
@@ -41,8 +35,8 @@ def test_oneone_read_waits(oneone):
     time.sleep(0.1)
     assert not t.is_alive()
 
-def test_oneone_multiple(oneone):
-    c = oneone
+def test_oneone_multiple():
+    c = OneOne('oneone_channel')
     l = [x*(x-20) for x in range(100)]
     def write():
         for x in l:
@@ -51,15 +45,15 @@ def test_oneone_multiple(oneone):
     for x in l:
         assert ~c == x
 
-def test_oneone_strings(oneone):
-    c = oneone
+def test_oneone_strings():
+    c = OneOne('oneone_channel')
     def write():
         c << "hello world"
     threading.Thread(target=write).start()
     assert ~c == "hello world"
 
 def test_manymany():
-    c = channel._N2N(5, 5, "", False, False)
+    c = N2N(5, 5, "", False, False)
 
     def write(i):
         def f():
@@ -73,7 +67,7 @@ def test_manymany():
             try:
                 while True:
                     result[i].append(~c)
-            except util.Closed:
+            except Closed:
                 pass
         return f
 
@@ -81,9 +75,9 @@ def test_manymany():
         time.sleep(1)
         c.close()
 
-    p = process.ParSyntax([process.Simple(kill)])
-    p = p | process.ParSyntax([process.Simple(write(i*1000)) for i in range(5)])
-    p = p | process.ParSyntax([process.Simple(read(i))       for i in range(5)])
+    p = ParSyntax([Simple(kill)])
+    p = p | ParSyntax([Simple(write(i*1000)) for i in range(5)])
+    p = p | ParSyntax([Simple(read(i))       for i in range(5)])
     p()
     # the below tests could fail as a result of random chance
     # none lost
@@ -100,7 +94,7 @@ def test_manymany():
     assert not any(len({y//1000 for y in x}) == 1 for x in result)
 
 def test_oneonebuf():
-    c = channel.OneOneBuf(1)
+    c = OneOneBuf(1)
     c << 1
     assert ~c == 1
     write_done = False
@@ -135,7 +129,7 @@ def test_oneonebuf():
     assert read_done
 
 def test_n2nbuf():
-    c = channel.N2NBuf(size=2, writers=3, readers=2)
+    c = N2NBuf(size=2, writers=3, readers=2)
     written = [False]*3
     def writer(i):
         c << i

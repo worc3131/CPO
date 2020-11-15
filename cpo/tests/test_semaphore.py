@@ -1,14 +1,13 @@
 
 import collections
-import pytest
 import threading
 import time
 
-from cpo import atomic, channel, semaphore
+from cpo import *
 
 def test_bool_semaphore():
-    s = semaphore.BooleanSemaphore(available=True)
-    c = channel.N2NBuf(10, 10, 10)
+    s = BooleanSemaphore(available=True)
+    c = N2NBuf(10, 10, 10)
     def worker(i):
         s.acquire()
         c << i
@@ -24,8 +23,8 @@ def test_bool_semaphore():
     assert c.is_empty()
 
 def test_bool_semaphore_max():
-    sem = semaphore.BooleanSemaphore(available=True)
-    vl = atomic.AtomicNum(0)
+    sem = BooleanSemaphore(available=True)
+    vl = AtomicNum(0)
     def worker():
         for _ in range(10000):
             with sem:
@@ -36,8 +35,8 @@ def test_bool_semaphore_max():
         threading.Thread(target=worker).start()
 
 def test_count_semaphore_max():
-    sem = semaphore.CountingSemaphore(5)
-    vl = atomic.AtomicNum(0)
+    sem = CountingSemaphore(5)
+    vl = AtomicNum(0)
     res = []
     def worker():
         for _ in range(50):

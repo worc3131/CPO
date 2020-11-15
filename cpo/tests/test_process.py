@@ -1,20 +1,17 @@
 
-import pytest
-import time
-
-from cpo import channel, debugger, process, util
+from cpo import *
 
 def test_process():
     v = 0
     def pass_():
         nonlocal v
         v = 1
-    p = process.Simple(pass_)
+    p = Simple(pass_)
     p()
     assert v == 1
 
 def test_process2():
-    c = channel.OneOne()
+    c = OneOne()
     result = 0
     def read():
         nonlocal result
@@ -23,15 +20,15 @@ def test_process2():
     def write():
         c << 123
         c << 111
-    p1 = process.Simple(read)
-    p2 = process.Simple(write)
+    p1 = Simple(read)
+    p2 = Simple(write)
     p = p1 | p2
     p()
     assert result == 234
 
 def test_close_channel():
-    c1 = channel.OneOne()
-    c2 = channel.OneOne()
+    c1 = OneOne()
+    c2 = OneOne()
     def write():
         for x in range(500):
             c1 << x
@@ -48,11 +45,11 @@ def test_close_channel():
         try:
             while True:
                 result += ~c2
-        except util.Closed:
+        except Closed:
             pass
-    p1 = process.Simple(write)
-    p2 = process.Simple(square)
-    p3 = process.Simple(read)
+    p1 = Simple(write)
+    p2 = Simple(square)
+    p3 = Simple(read)
     p = p1 | p2 | p3
     p()
     assert result == sum(x*x for x in range(500))
