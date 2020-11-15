@@ -5,7 +5,7 @@ import statistics
 
 from cpo import *
 
-def run_demo(num_drops=1e7):
+def run_demo(num_drops=1e6):
     """ Estimate pi by dropping needles onto a surface """
     NUM_WORKERS = 40
     DROPS_PER_TASK = 10000

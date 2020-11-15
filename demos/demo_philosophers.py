@@ -9,7 +9,7 @@ def run_demo():
     # our philosophers use chopsticks so as to not
     # confuse their forks and their forks
     N = 20
-    RUN_FOR = 0.5  # seconds
+    RUN_FOR = 1.0  # seconds
 
     chopsticks = [SimpleLock(True, f'chopstick {i}') for i in range(N)]
 
