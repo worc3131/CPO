@@ -36,7 +36,11 @@ def run_demo(num_drops=1e7):
     return statistics.mean(estimates)
 
 def main():
-    print('Pi has been calculated as: ', run_demo())
+    print(
+        'Pi has been calculated as: ',
+        run_demo(),
+        ' we will have to learn to live with it...'
+    )
 
 if __name__ == '__main__':
     main()
