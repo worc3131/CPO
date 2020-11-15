@@ -28,14 +28,29 @@ NoLock = dummy_threading.Lock
 NoLockClass: Type[NoLock] = util.get_ultimate_type(NoLock)
 RLockClass: Type[threading.RLock] = util.get_ultimate_type(threading.RLock)
 
-class Lock:
+class Lockable(ABC):
+
+    def acquire(self, blocking) -> bool:
+        raise NotImplementedError
+
+    def release(self) -> None:
+        raise NotImplementedError
+
+    def __enter__(self):
+        raise NotImplementedError
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        raise NotImplementedError
+
+
+class Lock(Lockable):
     # we wrap threading.Lock as it is non inheritable
 
     def __init__(self):
         self._lock = threading.Lock()
 
-    def acquire(self, blocking: bool) -> None:
-        return self._lock.acquire(blocking)
+    def acquire(self, blocking: bool) -> bool:
+        return self._lock.acquire(blocking=blocking)
 
     def release(self) -> None:
         return self._lock.release()
@@ -47,7 +62,7 @@ class Lock:
         return self._lock.__enter__()
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        return self._lock.__exit__()
+        return self._lock.__exit__(exc_type, exc_val, exc_tb)
 
     def __repr__(self) -> str:
         return self._lock.__repr__()
@@ -57,7 +72,8 @@ class Lock:
 
 class FairRLock(RLockClass):
     # TODO
-    pass
+    def __init__(self):
+        raise NotImplementedError
 
 class Tracked:
 
@@ -70,7 +86,7 @@ class Tracked:
     def latest_owners(self):
         raise NotImplementedError
 
-class TrackedMixin(Tracked):
+class TrackedMixin(Tracked, ABC):
 
     def __init__(self):
         super().__init__()
@@ -99,14 +115,14 @@ class TrackedMixin(Tracked):
             return []
         return [self._last_owner]
 
-class TrackedNoLock(TrackedMixin, NoLockClass):
+class TrackedNoLock(TrackedMixin, NoLockClass, Lockable):
     pass
 
 class TrackedLock(TrackedMixin, Lock):
     pass
 
-class TrackedRLock(TrackedMixin, RLockClass):
+class TrackedRLock(TrackedMixin, RLockClass, Lockable):
     pass
 
-class TrackedFairRLock(TrackedMixin, FairRLock):
+class TrackedFairRLock(TrackedMixin, FairRLock, Lockable):
     pass

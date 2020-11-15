@@ -4,6 +4,7 @@ import socket
 import sys
 import threading
 import traceback
+from typing import Callable, Dict, Optional
 
 from . import config
 from . import register
@@ -18,7 +19,7 @@ class DEBUGGER:
         self.host = 'localhost'
         self.port = config.get('port', self.debug_port)
         self.SUPPRESS = config.get('suppress', '')
-        self.monitored = {}
+        self.monitored: Dict[str, Optional[Callable[[], str]]] = {}
         if self.port >= 0:
             self.socket = server.create_server(self.host, self.port)
             self.port = self.socket.getsockname()[1]
@@ -33,13 +34,13 @@ class DEBUGGER:
     def __str__(self):
         return f'Debugger(http://{self.host}:{self.port})'
 
-    def monitor(self, name, state):
+    def monitor(self, name: str, state: Optional[Callable[[], str]]):
         self.monitored[name] = state
 
-    def remove_monitor(self, name):
+    def remove_monitor(self, name: str):
         del self.monitored[name]
 
-    def clear_monitor(self, name):
+    def clear_monitor(self):
         self.monitored = {}
 
     def run_server(self):

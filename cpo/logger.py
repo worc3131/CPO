@@ -3,7 +3,8 @@ import collections
 from dataclasses import dataclass
 import inspect
 import threading
-from typing import Deque
+import types
+from typing import Deque, Optional
 
 from . import config
 from .register import Debuggable
@@ -15,11 +16,12 @@ from .util import Nanoseconds
 class Event:
     timestamp: Nanoseconds
     thread_id: str
-    tb: inspect.Traceback
+    tb: Optional[inspect.Traceback]
     text: str
 
     def __str__(self):
-        return f'{self.timestamp}:: {self.thread_id}@{self.tb.function}: {self.text}'
+        fn: str = "unknown" if self.tb is None else str(self.tb.function)
+        return f'{self.timestamp}:: {self.thread_id}@{fn}: {self.text}'
 
 class Logger(Debuggable):
 
@@ -36,8 +38,11 @@ class Logger(Debuggable):
     def log(self, bits: int, text):
         if self.mask & bits != bits:
             with self.lock:
-                frame = inspect.currentframe()
-                tb: inspect.Traceback = inspect.getframeinfo(frame)
+                frame: Optional[types.FrameType] = inspect.currentframe()
+                if frame is None:
+                    tb = None
+                else:
+                    tb = inspect.getframeinfo(frame)
                 message = Event(
                     util.nano_time(),
                     threads.get_thread_identity(threading.current_thread()),

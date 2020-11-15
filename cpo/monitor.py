@@ -1,7 +1,7 @@
 
 from abc import ABC
 import threading
-from typing import Optional, Sequence
+from typing import List, Optional
 
 from . import conc
 from .register import Debuggable
@@ -16,7 +16,7 @@ class Monitor(Debuggable, ABC):
             name = repr(self)
         self.name = name
 
-    def get_waiting(self, cond=None) -> Sequence[threading.Thread]:
+    def get_waiting(self, cond=None) -> List[threading.Thread]:
         if cond is None:
             raise NotImplementedError
         return self.lock.get_waiting(cond)
