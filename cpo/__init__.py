@@ -1,7 +1,7 @@
 
 __version__ = 1.0
 
-import _sys
+import sys as _sys
 MIN_PYTHON = (3, 7)
 if _sys.version_info < MIN_PYTHON:
     _sys.exit('Python 3.7+ is required')
