@@ -4,6 +4,15 @@ import time
 
 from cpo import *
 
+def test_init():
+    OneOne()
+    N2N()
+    ManyOne()
+    OneMany()
+    ManyMany()
+    OneOneBuf(1)
+    N2NBuf()
+
 def test_oneone():
     c = OneOne('oneone_channel')
     def write():

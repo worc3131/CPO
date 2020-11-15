@@ -1,6 +1,13 @@
 
 from cpo import *
 
+def test_init():
+    def work():
+        pass
+    p = Simple(work)
+    Par("", [p])
+    ParSyntax([p])
+
 def test_process():
     v = 0
     def pass_():

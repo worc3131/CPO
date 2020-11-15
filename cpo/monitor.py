@@ -11,7 +11,7 @@ from .util import Nanoseconds
 class Monitor(Debuggable, ABC):
 
     def __init__(self, name: Optional[str] = None) -> None:
-        self.lock = conc.XRLock()
+        self.lock = conc.TrackedRLock()
         if name is None:
             name = repr(self)
         self.name = name
@@ -22,22 +22,23 @@ class Monitor(Debuggable, ABC):
         return self.lock.get_waiting(cond)
 
     def __str__(self) -> str:
-        o = self.lock.last_owner()
+        own = self.lock.latest_owners()
         w = self.get_waiting()
-        if o is None and len(w)==0:
+        if len(own) == 0 and len(w) == 0:
             return f'Monitor({self.name})'
+        o = ', '.join(map(str, own))
         return f'Monitor({self.name}) owned by {o} awaited by {w}'
 
     def show_state(self, file):
-        o = self.lock.last_owner()
+        own = self.lock.latest_owners()
         w = self.get_waiting()
-        if not(o is None and len(w)==0):
+        if not(own == [] and len(w) == 0):
             util.synced_print(str(self), file=file)
 
     def has_state(self) -> bool:
-        o = self.lock.last_owner()
+        own = self.lock.latest_owners()
         w = self.get_waiting()
-        return not (o is None and len(w) == 0)
+        return not (own == [] and len(w) == 0)
 
     new_condition = threading.Condition
 

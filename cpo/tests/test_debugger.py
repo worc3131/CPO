@@ -3,6 +3,10 @@ import time
 
 from cpo import *
 
+def test_init():
+    d = DEBUGGER()
+    d.show_cso_state()
+
 def test_runs():
     N = 5
     chan = N2N(N, N)

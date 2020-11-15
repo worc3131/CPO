@@ -91,7 +91,12 @@ class TrackedMixin(Tracked):
         else:
             return [x for x in self._waiters if cond(x)]
 
+    def has_waiters(self, cond) -> bool:
+        return len(self.get_waiting(cond)) > 0
+
     def latest_owners(self):
+        if self._last_owner is None:
+            return []
         return [self._last_owner]
 
 class TrackedNoLock(TrackedMixin, NoLockClass):

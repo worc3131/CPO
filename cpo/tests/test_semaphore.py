@@ -5,6 +5,10 @@ import time
 
 from cpo import *
 
+def test_init():
+    BooleanSemaphore()
+    CountingSemaphore()
+
 def test_bool_semaphore():
     s = BooleanSemaphore(available=True)
     c = N2NBuf(10, 10, 10)

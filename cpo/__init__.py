@@ -5,7 +5,7 @@ from .channel import OneOne, N2N, OneMany, ManyOne, ManyMany, OneOneBuf, N2NBuf
 from .debugger import DEBUGGER
 from .flag import Flag
 from .lock import SimpleLock
-from .logging import Logger
+from .logger import Logger
 from .monitor import Monitor
 from .process import Simple, SKIP, Par, ParSyntax
 from .queue import LockFreeQueue
