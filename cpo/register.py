@@ -7,7 +7,7 @@ from typing import Dict, List, Optional, Sequence
 import weakref
 
 from .atomic import AtomicCounter
-from . import conc
+from . import threads
 from . import util
 
 class StateKey(int):
@@ -68,12 +68,12 @@ def waiting() -> Dict[threading.Thread, List[Debuggable]]:
                     result[thread].append(obj)
     return result
 
-def show_threads(file, caption: str, threads: Sequence[threading.Thread]):
-    if len(threads) > 0:
+def show_threads(file, caption: str, threads_: Sequence[threading.Thread]):
+    if len(threads_) > 0:
         c = ""
         util.synced_print(caption, file=file, end='')
-        for thread in threads:
+        for thread in threads_:
             util.synced_print(
-                f'{c} {conc.get_thread_identity(thread)}',
+                f'{c} {threads.get_thread_identity(thread)}',
                 file=file, end='')
             c = ","

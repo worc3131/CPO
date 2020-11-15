@@ -414,7 +414,7 @@ class _N2NBuf(SharedChan[T]):
         self.output_closed = Atomic(False)
         self.reads = AtomicNum(0)
         self.writes = AtomicNum(0)
-        self.queue = queue.Queue(maxsize=size)
+        self.queue: queue.Queue = queue.Queue(maxsize=size)
         self.register()
 
     def in_port_state(self) -> PortState:
@@ -497,7 +497,7 @@ class _N2NBuf(SharedChan[T]):
     def is_full(self) -> bool:
         return self.queue.full()
 
-    def __invert__(self) -> T:
+    def __invert__(self) -> Optional[T]:
         if self.input_closed.get():
             raise util.Closed(self.name)
         if self.output_closed.get() and self.is_empty():

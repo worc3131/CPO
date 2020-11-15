@@ -10,7 +10,6 @@ from .atomic import AtomicCounter
 from .channel import InPort
 from . import conc
 from . import executor
-from . import threads
 from . import util
 
 Latch = conc.CountDownLatch
@@ -34,6 +33,11 @@ class Handle(util.Runnable):
         return f'{repr(self)} thread={self.thread}, ' \
                f'exc={self.exc}, tb={self.exc.__traceback__ if self.exc else ""}'
 
+    def is_alive(self) -> bool:
+        if self.thread is None:
+            return False
+        return self.thread.is_alive()
+
     def interrupt(self) -> None:
         #if thread is not None: thread.interrupt()
         raise Exception('Not possible in python..')
@@ -50,9 +54,9 @@ class Handle(util.Runnable):
     def run(self) -> None:
         orig_name = ""
         try:
-            thread = threading.current_thread()
-            orig_name = thread.getName()
-            thread.setName(self.name)
+            self.thread = threading.current_thread()
+            orig_name = self.thread.getName()
+            self.thread.setName(self.name)
             self.body()
         except util.Stopped as e:
             self.exc = e
@@ -61,7 +65,9 @@ class Handle(util.Runnable):
                 Process.handle_exception(self.name, e)
             self.exc = e
         finally:
-            thread.setName(orig_name)
+            if self.thread is not None:
+                self.thread.setName(orig_name)
+            self.thread = None
 
         if self.latch is not None:
             self.latch.count_down()

@@ -58,8 +58,8 @@ class CombiningBarrier(Generic[T]):
 
     def sync(self, t: T) -> T:
         self.enter.down()
-        self.result = op(self.result, t)
-        if self.waiting == n-1:
+        self.result = self.op(self.result, t)
+        if self.waiting == self.n-1:
             try:
                 return self.result
             finally:

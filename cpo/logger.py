@@ -5,9 +5,9 @@ import inspect
 import threading
 from typing import Deque
 
-from . import conc
 from . import config
 from .register import Debuggable
+from . import threads
 from . import util
 from .util import Nanoseconds
 
@@ -40,7 +40,7 @@ class Logger(Debuggable):
                 tb: inspect.Traceback = inspect.getframeinfo(frame)
                 message = Event(
                     util.nano_time(),
-                    conc.get_thread_identity(threading.current_thread()),
+                    threads.get_thread_identity(threading.current_thread()),
                     tb,
                     text()
                 )

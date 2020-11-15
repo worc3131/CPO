@@ -10,7 +10,7 @@ class NameGenerator:
         self._kind = _kind
         self._occurs = AtomicCounter()
 
-    def _gen_name(self, name: str) -> str:
+    def _gen_name(self, name: Optional[str] = None) -> str:
         if name is None:
             return f'{self._kind}-{next(self._occurs)}'
         return name

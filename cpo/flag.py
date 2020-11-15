@@ -65,7 +65,7 @@ class _Flag(semaphore.Semaphore):
                         outcome, waiting = False, False
         return outcome
 
-    def _get_waiting(self) -> threading.Thread:
+    def _get_waiting(self) -> Optional[threading.Thread]:
         return self._waiting.get()
 
     def release(self) -> None:

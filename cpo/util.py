@@ -8,6 +8,7 @@ from typing import Dict, Optional
 
 
 class Runnable(metaclass=ABCMeta):
+
     def run(self) -> None:
         raise NotImplemented
 

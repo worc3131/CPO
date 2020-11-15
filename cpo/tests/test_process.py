@@ -9,50 +9,58 @@ def test_init():
     IterToChannel([], c)
     Par("", [p])
     ParSyntax([p])
+    @proc
+    def work():
+        pass
+    @procs([1, 2, 3])
+    def work(i):
+        pass
 
 def test_iter_to_channel():
     c = OneOne()
     vals = [1, 42, 123]
+    @proc
     def read():
         for v in vals:
             assert ~c == v
     pw = IterToChannel(vals, c)
-    pr = Simple(read)
-    p = pw | pr
+    p = pw | read
     p()
 
 def test_process():
     v = 0
+    @proc
     def pass_():
         nonlocal v
         v = 1
-    p = Simple(pass_)
-    p()
+    pass_()
     assert v == 1
 
 def test_process2():
     c = OneOne()
     result = 0
+    @proc
     def read():
         nonlocal result
         result += ~c
         result += ~c
+    @proc
     def write():
         c << 123
         c << 111
-    p1 = Simple(read)
-    p2 = Simple(write)
-    p = p1 | p2
+    p = read | write
     p()
     assert result == 234
 
 def test_close_channel():
     c1 = OneOne()
     c2 = OneOne()
+    @proc
     def write():
         for x in range(500):
             c1 << x
         c1.close()
+    @proc
     def square():
         try:
             while True:
@@ -60,6 +68,7 @@ def test_close_channel():
         except util.Closed:
             c2.close()
     result = 0
+    @proc
     def read():
         nonlocal result
         try:
@@ -67,9 +76,6 @@ def test_close_channel():
                 result += ~c2
         except Closed:
             pass
-    p1 = Simple(write)
-    p2 = Simple(square)
-    p3 = Simple(read)
-    p = p1 | p2 | p3
+    p = write | square | read
     p()
     assert result == sum(x*x for x in range(500))
