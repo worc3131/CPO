@@ -84,3 +84,6 @@ def fork_procs(variant_arg: Optional[Iterable[T]] = None,
         procs = procs_dec(fn)
         return procs.fork()
     return decorator
+
+def run(proc: process.PROC) -> None:
+    proc()

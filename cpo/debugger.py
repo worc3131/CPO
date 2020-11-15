@@ -93,7 +93,7 @@ CPO State {datetime.datetime.now()}
         waiting = register.waiting()
         registered = register.registered
 
-        print(f'{len(active_threads)-2} threads active')  #
+        print(f'{len(active_threads)-2} threads active', file=file)
         for thread in active_threads:
             self.show_thread_state(file, thread, waiting.get(thread, None))
 
