@@ -24,38 +24,48 @@ def procs(variant_arg: Optional[Iterable[T]] = None,
                          "variant_args but not both")
     return decorator
 
-def attempt(body: Callable[[], None],
+def attempt(body: Optional[Callable] = None,
             alt: Optional[Callable[[], None]] = None) \
-        -> Callable[[], None]:
+        -> Callable:
     """ A decorater to attempt an action """
-    def inner() -> None:
-        try:
-            body()
-        except Stopped:
-            if alt is not None:
-                alt()
-        except Exception:
-            raise
-    return inner
-
-def repeat(body: Callable[[],  None],
-           guard: Optional[Callable[[], bool]] = None) \
-        -> Callable[[], None]:
-    """ A decorator to repeat an action """
-    def inner() -> None:
-        nonlocal guard
-        if guard is None:
-            guard = lambda: True
-        go = guard()
-        while go:
+    def decorator(body):
+        def inner(*args) -> None:
             try:
-                body()
-                go = guard()
+                body(*args)
             except Stopped:
-                go = False
+                if alt is not None:
+                    alt(*args)
             except Exception:
                 raise
-    return inner
+        return inner
+    if body is None:
+        return decorator
+    else:
+        return decorator(body)
+
+def repeat(body: Optional[Callable] = None,
+           guard: Optional[Callable[[], bool]] = None) \
+        -> Callable:
+    """ A decorator to repeat an action """
+    def decorator(body):
+        def inner(*args) -> None:
+            nonlocal guard
+            if guard is None:
+                guard = lambda *args: True
+            go = guard(*args)
+            while go:
+                try:
+                    body(*args)
+                    go = guard(*args)
+                except Stopped:
+                    go = False
+                except Exception:
+                    raise
+        return inner
+    if body is None:
+        return decorator
+    else:
+        return decorator(body)
 
 def fork(proc: process.PROC) -> process.Handle:
     """ A decorator to fork a process """

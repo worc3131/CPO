@@ -69,12 +69,9 @@ def test_manymany():
     result = [[] for _ in range(5)]
 
     @procs([i for i in range(5)])
+    @repeat
     def readers(i):
-        try:
-            while True:
-                result[i].append(~c)
-        except Closed:
-            pass
+        result[i].append(~c)
 
     @proc
     def kill():

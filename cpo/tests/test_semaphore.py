@@ -11,12 +11,12 @@ def test_init():
 
 def test_bool_semaphore():
     s = BooleanSemaphore(available=True)
+    s.acquire()
     c = N2NBuf(10, 10, 10)
     def worker(i):
         s.acquire()
         c << i
         s.release()
-    s.acquire()
     for i in range(5):
         threading.Thread(target=worker, args=(i,)).start()
         time.sleep(0.2)
@@ -29,20 +29,21 @@ def test_bool_semaphore():
 def test_bool_semaphore_max():
     sem = BooleanSemaphore(available=True)
     vl = AtomicNum(0)
-    def worker():
+    @fork_procs(range(100))
+    def worker(i):
         for _ in range(10000):
             with sem:
                 vl.inc(1)
                 assert vl.get() == 1
                 vl.dec(1)
-    for _ in range(100):
-        threading.Thread(target=worker).start()
+    time.sleep(0.5)
 
 def test_count_semaphore_max():
     sem = CountingSemaphore(5)
     vl = AtomicNum(0)
     res = []
-    def worker():
+    @fork_procs(range(100))
+    def worker(i):
         for _ in range(50):
             with sem:
                 vl.inc(1)
@@ -51,8 +52,6 @@ def test_count_semaphore_max():
                 assert v <= 5
                 res.append(v)
                 vl.dec(1)
-    for _ in range(100):
-        threading.Thread(target=worker).start()
-    time.sleep(0.2)
+    time.sleep(0.5)
     print(collections.Counter(res))
     assert len(set(res)) == 5

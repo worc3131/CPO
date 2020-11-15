@@ -61,21 +61,15 @@ def test_close_channel():
             c1 << x
         c1.close()
     @proc
+    @repeat(guard=lambda: c2.close())
     def square():
-        try:
-            while True:
-                c2 << (~c1)**2
-        except util.Closed:
-            c2.close()
+        c2 << (~c1)**2
     result = 0
     @proc
+    @repeat
     def read():
         nonlocal result
-        try:
-            while True:
-                result += ~c2
-        except Closed:
-            pass
+        result += ~c2
     p = write | square | read
     p()
     assert result == sum(x*x for x in range(500))
