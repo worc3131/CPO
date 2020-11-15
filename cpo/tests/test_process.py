@@ -2,11 +2,24 @@
 from cpo import *
 
 def test_init():
+    c = OneOne()
     def work():
         pass
     p = Simple(work)
+    IterToChannel([], c)
     Par("", [p])
     ParSyntax([p])
+
+def test_iter_to_channel():
+    c = OneOne()
+    vals = [1, 42, 123]
+    def read():
+        for v in vals:
+            assert ~c == v
+    pw = IterToChannel(vals, c)
+    pr = Simple(read)
+    p = pw | pr
+    p()
 
 def test_process():
     v = 0

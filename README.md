@@ -1,5 +1,7 @@
 # C(3)PO Communicating Python Objects  
 
+A work in progress...
+
 An attempt the reacreate the occam like CSO library built by my comrade and
  teacher, Bernard Sufrin.
  

@@ -7,7 +7,7 @@ from .flag import Flag
 from .lock import SimpleLock
 from .logger import Logger
 from .monitor import Monitor
-from .process import Simple, SKIP, Par, ParSyntax
+from .process import Simple, IterToChannel, SKIP, Par, ParSyntax
 from .queue import LockFreeQueue
 from .semaphore import BooleanSemaphore, CountingSemaphore
 from .util import Closed, Stopped
