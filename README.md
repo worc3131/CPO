@@ -17,7 +17,7 @@ as follows:
 | `c ?`            | `~c`           | Read from channel c |  
 | `c ? f`          | nyi            | Not implemented. Use f(c?) instead |
 | `c ?? f`         | `~c(f)`        | Execute f on the data from channel c in the reader process |
-| `proc {expr}`    |<code>@proc<br/>def p():<br/>&nbsp;&nbsp;&nbsp;&nbsp;{expr}</code> | create a process p for which p() is run in the current thread |
+| `proc {expr}`    |<code>@proc<br/>def p(): {expr}</code> | create a process p for which p() is run in the current thread |
 | p1 &#124;&#124; p2 &#124;&#124; .. | p1 &#124; p2 &#124; .. | Run each of these processes concurrently only terminating when all of them have terminated |
 | p1 &#124;&#124; [p2,p3,..] | p1 &#124; [p2,p3,...] | |
 | `run(p)`         | `run(p)`  or `run` | Run p in the current thread |
