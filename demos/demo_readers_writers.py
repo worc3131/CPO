@@ -7,7 +7,7 @@ def run_demo(Solution):
     N_READERS = 20
     N_WRITERS = 20
     DATA_LEN = 1000
-    RUN_TIME = 10  # seconds
+    RUN_TIME = 15  # seconds
 
     sol = Solution(DATA_LEN)
     sol.spawn_readers(N_READERS)
@@ -133,7 +133,7 @@ class ReadFavouredRWSolution(RWSolution):
 
     @staticmethod
     def describe() -> str:
-        return "Favouring reads."
+        return "With protection favouring reads."
 
     def before_read(self, idx):
         self.read_semaphore.acquire()
@@ -169,7 +169,7 @@ class WriteFavouredSolution(RWSolution):
 
     @staticmethod
     def describe() -> str:
-        return "Favouring writes."
+        return "With protect favouring writes."
 
     def before_read(self, idx):
         self.read_try_semaphore.acquire()
@@ -215,7 +215,7 @@ class BalancedRWSolution(RWSolution):
 
     @staticmethod
     def describe() -> str:
-        return "With a balance."
+        return "With balanced protection."
 
     def before_read(self, idx):
         self.queue_semaphore.acquire()
