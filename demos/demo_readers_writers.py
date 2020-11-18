@@ -169,7 +169,7 @@ class WriteFavouredSolution(RWSolution):
 
     @staticmethod
     def describe() -> str:
-        return "With protect favouring writes."
+        return "With protection favouring writes."
 
     def before_read(self, idx):
         self.read_try_semaphore.acquire()
