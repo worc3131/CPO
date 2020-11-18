@@ -13,7 +13,8 @@ from .debugger import DEBUGGER
 from .flag import Flag
 from .lock import SimpleLock
 from .logger import Logger
-from .meta import proc, procs, attempt, repeat, fork, fork_proc, fork_procs
+from .meta import proc, procs, attempt, repeat, fork, fork_proc, fork_procs,\
+    stop
 from .monitor import Monitor
 from .process import Simple, IterToChannel, SKIP, Par, ParSyntax
 from .queue import LockFreeQueue

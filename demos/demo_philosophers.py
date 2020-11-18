@@ -13,13 +13,13 @@ def run_demo():
 
     chopsticks = [SimpleLock(True, f'chopstick {i}') for i in range(N)]
 
-    stop = False
+    kill = False
     times_ate = [0]*N
     @fork_procs(range(N))
     @repeat
     def philosopher(i):
-        if stop:
-            raise Stopped
+        if kill:
+            stop()
         l, r = i, (i+1) % N
         if random.random() < 0.5:
             l, r = r, l
@@ -31,7 +31,7 @@ def run_demo():
 
     time.sleep(RUN_FOR)
 
-    stop = True
+    kill = True
     for c in chopsticks:
         c.cancel()
 

@@ -11,9 +11,9 @@ Record = collections.namedtuple('Record', ['idx', 'vector', 'actual'])
 
 def run_demo():
     """ A simulation of vector clocks """
-    N_WORKERS = 40
-    P_MSG = 0.01
-    P_EVENT = 0.25
+    N_WORKERS = 20
+    P_MSG = 0.05
+    P_EVENT = 0.5
     P_SLEEP = 0.05
     RUN_TIME = 10  # seconds
 
@@ -31,7 +31,7 @@ def run_demo():
     @repeat
     def workers(idx):
         if kill:
-            raise Stopped
+            stop()
         # read all our messages
         while mailboxes[idx].length() > 0:
             msg = mailboxes[idx].dequeue()
@@ -50,7 +50,7 @@ def run_demo():
                     mailboxes[oth].enqueue(msg)
         # maybe sleep
         if random.random() < P_SLEEP:
-            time.sleep(RUN_TIME*0.05)
+            time.sleep(RUN_TIME*0.01)
 
     time.sleep(RUN_TIME)
     kill = True

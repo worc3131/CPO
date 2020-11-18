@@ -87,3 +87,6 @@ def fork_procs(variant_arg: Optional[Iterable[T]] = None,
 
 def run(proc: process.PROC) -> None:
     proc()
+
+def stop() -> None:
+    raise Stopped
