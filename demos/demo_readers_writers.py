@@ -6,7 +6,7 @@ from cpo import *
 def run_demo(Solution):
     N_READERS = 20
     N_WRITERS = 20
-    DATA_LEN = 1000
+    DATA_LEN = 10000
     RUN_TIME = 15  # seconds
 
     sol = Solution(DATA_LEN)
