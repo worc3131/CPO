@@ -6,4 +6,4 @@ dist
 CPO.egg-info
 .mypy_cache
 .pytest_cache
-.ipynb
+*.ipynb
