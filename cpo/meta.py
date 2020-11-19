@@ -131,8 +131,8 @@ def gen_proc(gen=None, in_channel=None, out_channel=None):
     else:
         return decorator(gen)
 
-def fork_gen_proc(gen=None, in_channel=None, out_channel=None)
-    def decorator(fn):
+def fork_gen_proc(gen=None, in_channel=None, out_channel=None):
+    def decorator(gen):
         return fork(gen_proc(gen, in_channel, out_channel))
     if gen is None:
         return decorator
