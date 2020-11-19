@@ -20,8 +20,11 @@ class Semaphore(ABC):
     def release(self) -> None:
         raise NotImplementedError
 
-    down = acquire
-    up = release
+    def down(self) -> None:
+        self.acquire()
+
+    def up(self) -> None:
+        self.release()
 
     def try_acquire(self, timeout: Nanoseconds) -> bool:
         raise NotImplementedError
