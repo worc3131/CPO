@@ -143,10 +143,10 @@ class _OneOne(SyncChan[T]):
         self.writes = AtomicNum(0)
         self.register()
 
-    def finished_read(self) -> int:
+    def _finished_read(self) -> int:
         return self.reads.inc(1)
 
-    def finished_write(self) -> int:
+    def _finished_write(self) -> int:
         return self.writes.inc(1)
 
     def finished_rw(self) -> str:
@@ -214,7 +214,7 @@ class _OneOne(SyncChan[T]):
         if self.full.get():
             self.check_open()
         self.writer.set(None)
-        self.finished_write()
+        self._finished_write()
         return value
 
     def __invert__(self) -> T:
@@ -233,7 +233,7 @@ class _OneOne(SyncChan[T]):
         self.full.set(False)
         threads.unpark(self.writer.get_and_set(None))
         self.reader.set(None)
-        self.finished_read()
+        self._finished_read()
         return result
 
     def close(self):
@@ -260,7 +260,7 @@ class _OneOne(SyncChan[T]):
         self.full.set(False)
         threads.unpark(self.writer.get_and_set(null))
         self.reader.set(None)
-        self.finished_read()
+        self._finished_read()
         return result
 
     @property
@@ -311,7 +311,6 @@ class _N2N(SharedChan[T], _OneOne[T]):
         self.rs = AtomicNum(readers)
         self.wm = conc.TrackedFairRLock() if fair_out else conc.TrackedRLock()
         self.rm = conc.TrackedFairRLock() if fair_in else conc.TrackedRLock()
-
 
     def close_out(self):
         if self.ws.dec(1) == 0:
@@ -444,13 +443,13 @@ class _N2NBuf(SharedChan[T]):
     def name_generator(self) -> NameGenerator:
         return N2NBuf
 
-    def finished_read(self):
+    def _finished_read(self):
         return self.reads.inc(1)
 
-    def finished_write(self):
+    def _finished_write(self):
         return self.writes.inc(1)
 
-    def finished_RW(self):
+    def finished_rw(self):
         return f'(READ {self.reads.get()}, WRITTEN {self.writes.get()})'
 
     def state(self, port: str, closed: bool) -> str:
@@ -462,7 +461,7 @@ class _N2NBuf(SharedChan[T]):
                f"{self.state('InPort', self.input_closed.get())}" \
                f"(writers={self.ws.get()}, readers={self.rs.get()}) " \
                f"size={self.size}, length={len(self.queue)}) " \
-               f"{self.finished_RW()}"
+               f"{self.finished_rw()}"
 
     def show_state(self, file) -> None:
         print(str(self), end='', file=file)
@@ -486,13 +485,11 @@ class _N2NBuf(SharedChan[T]):
             if self.is_empty:
                 self.close()
 
-
     def close_in(self):
         if self.rs.dec(1) == 0:
             self.input_closed.set(True)
             self.out_port_event(CLOSEDSTATE)
             self.close()
-
 
     def can_input(self) -> bool:
         return not (self.output_closed.get() and self.is_empty())
@@ -515,7 +512,7 @@ class _N2NBuf(SharedChan[T]):
         try:
             self.out_port_event(READYSTATE)
             r = self.queue.get()
-            self.finished_read()
+            self._finished_read()
             return r
         except queue.Empty:
             return None
@@ -537,7 +534,7 @@ class _N2NBuf(SharedChan[T]):
         try:
             self.queue.put(value)
             self.in_port_event(READYSTATE)
-            self.finished_write()
+            self._finished_write()
         except InterruptedError:
             raise util.Closed(self.name)
         if self.input_closed.get():
