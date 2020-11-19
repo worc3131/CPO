@@ -60,7 +60,7 @@ class _Flag(semaphore.Semaphore):
                 if left <= 0:
                     outcome, waiting = False, False
                 else:
-                    threads.park_current_threads_nanos(left)
+                    threads.park_current_thread_nanos(left)
                     if deadline < util.nano_time():
                         outcome, waiting = False, False
         return outcome

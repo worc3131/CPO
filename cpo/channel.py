@@ -87,7 +87,7 @@ class InPortFunc(Generic[TI]):
         self.func = func
 
     def __invert__(self):
-        self.port.extended_rendezvous(self.func)
+        return self.port.extended_rendezvous(self.func)
 
 TO = TypeVar('TO')
 class OutPort(Generic[TO]):
@@ -258,7 +258,7 @@ class _OneOne(SyncChan[T]):
         result = func(self.buffer)
         self.buffer = None
         self.full.set(False)
-        threads.unpark(self.writer.get_and_set(null))
+        threads.unpark(self.writer.get_and_set(None))
         self.reader.set(None)
         self._finished_read()
         return result
@@ -283,12 +283,49 @@ class _OneOne(SyncChan[T]):
             self.reader.set(None)
             raise util.Closed(self.name)
 
-    def read_before(self, ns: Nanoseconds) -> Optional[T]:
-        raise NotImplementedError
+    def read_before(self, timeout: Nanoseconds) -> Optional[T]:
+        assert self.reader.get() is None, f"~c() overtaking " \
+                                          f"[{threads.get_thread_identity(self.reader.get())}]" \
+                                          f" in {threads.get_thread_identity(threading.current_thread())}"
+        self.check_open()
+        curr = threading.current_thread()
+        self.reader.set(curr)
+        self.out_port_event(READYSTATE)
+        success = 0 < threads.park_current_thread_until_elapsed_or(
+            timeout,
+            lambda: self.closed.get() or self.full.get(),
+        )
+        self.check_open()
+        result = self.buffer
+        self.buffer = None
+        self.full.set(False)
+        threads.unpark(self.writer.get_and_set(None))
+        self.reader.set(None)
+        self._finished_read()
+        return result if success else None
 
-    def write_before(self, ns: Nanoseconds, val: T) -> bool:
-        raise NotImplementedError
-
+    def write_before(self, timeout: Nanoseconds, value: T) -> bool:
+        assert self.writer.get() is None, f"c << {value} in " \
+                                          f"{threads.get_thread_identity(threading.current_thread())}" \
+                                          f" overtaking <<{self.buffer} " \
+                                          f"[{threads.get_thread_identity(self.writer.get())}]"
+        self.check_open()
+        self.buffer = value
+        curr = threading.current_thread()
+        self.writer.set(curr)
+        self.full.set(True)
+        self.in_port_event(READYSTATE)
+        threads.unpark(self.reader.get_and_set(None))
+        success = 0 < threads.park_current_thread_until_elapsed_or(
+            timeout,
+            lambda: self.closed.get() or not self.full.get(),
+        )
+        if not success:
+            self.full.set(False)
+        self.writer.set(None)
+        self.check_open()
+        self._finished_write()
+        return success
 
 class _OneOneFactory(NameGenerator, metaclass=Singleton):
 

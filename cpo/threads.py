@@ -1,8 +1,9 @@
 
 import threading
 import time
-from typing import Optional, Sequence
+from typing import Callable, Optional, Sequence
 
+from . import util
 from .util import Nanoseconds
 
 main_thread = threading.current_thread()
@@ -22,24 +23,15 @@ def get_thread_identity(thread: Optional[threading.Thread]):
 
 parking_lot = {}
 
-def park_current_thread():
+def park_current_thread(timeout: Optional[Nanoseconds] = None):
+    timeout_sec = None if timeout is None else timeout.to_seconds()
     ident = threading.get_ident()
     assert not ident in parking_lot
     parking_lot[ident] = threading.Event()
-    parking_lot[ident].wait()
+    parking_lot[ident].wait(timeout=timeout_sec)
     parking_lot[ident].clear()
     del parking_lot[ident]  # TODO remove this safety check and the assert above
 
-def park_current_threads_nanos(ns: Nanoseconds):
-    done = False
-    ident = threading.get_ident()
-    def alarm():
-        time.sleep(ns.to_seconds())
-        if not done:
-            unpark_ident(ident)
-    threading.Thread(target=alarm).start()
-    park_current_thread()
-    done = True
 
 def unpark(blocker: Optional[threading.Thread]):
     if blocker is None:
@@ -53,11 +45,20 @@ def unpark_ident(ident: Optional[int]):
     if pl is not None:
         pl.set()
 
-def park_until_deadline_or(blocker, deadline: Nanoseconds, condition) -> Nanoseconds:
-    raise NotImplementedError
+def park_current_thread_until_deadline_or(deadline: Nanoseconds, condition: Callable[[],bool]) -> Nanoseconds:
+    left = deadline - util.nano_time()
+    while left > 0 and not condition():
+        park_current_thread(timeout=left)
+        left = deadline - util.nano_time()
+    return left
 
-def park_until_elapsed_or(blocker, timeout: Nanoseconds, condition) -> Nanoseconds:
-    raise NotImplementedError
+def park_current_thread_until_elapsed_or(timeout: Nanoseconds, condition: Callable[[],bool]) -> Nanoseconds:
+    deadline = timeout + util.nano_time()
+    left = timeout
+    while left > 0 and not condition():
+        park_current_thread(timeout=left)
+        left = deadline - util.nano_time()
+    return left
 
 class StackSize:
 

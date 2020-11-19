@@ -28,7 +28,7 @@ class Nanoseconds(float):
         return self * 1e-9
 
     @staticmethod
-    def from_seconds(self, seconds: float) -> Nanoseconds:
+    def from_seconds(seconds: float) -> Nanoseconds:
         return Nanoseconds(seconds * 1e9)
 
 
