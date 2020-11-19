@@ -70,6 +70,15 @@ class InPort(Generic[TI]):
     def in_port_state(self) -> PortState:
         raise NotImplementedError
 
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        try:
+            return self.__invert__()
+        except util.Stopped:
+            raise StopIteration
+
 
 class InPortFunc(Generic[TI]):
 

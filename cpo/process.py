@@ -7,7 +7,7 @@ import traceback
 from typing import List, Optional, Sequence, Union
 
 from .atomic import AtomicCounter
-from .channel import InPort
+from . import channel
 from . import conc
 from . import executor
 from . import util
@@ -149,23 +149,24 @@ class Simple(PROC):
 
 class IterToChannel(Simple):
 
-    def __init__(self, iter_, channel: InPort, name=None):
+    def __init__(self, iter_, channel_: channel.OutPort, name=None):
         if not hasattr(iter_, '__next__'):
             iter_ = iter(iter_)
         self.iter_ = iter_
-        self.channel = channel
+        self.channel_ = channel_
         super().__init__(self.iter_to_channel, name)
 
     def iter_to_channel(self):
         try:
             while True:
-                self.channel << next(self.iter_)
+                self.channel_ << next(self.iter_)
         except StopIteration:
             pass
         except util.Closed:
             pass
         finally:
-            self.channel.close_in()
+            self.channel_.close_out()
+
 
 
 class _SKIP(Simple):

@@ -1,24 +1,29 @@
 
-from typing import Any, Callable, Iterable, List, Optional, Sequence, TypeVar
+import inspect
+from typing import Callable, Iterable, Optional, Sequence, TypeVar
 
 from . import process
 from .util import Closed, Stopped
 
-def proc(fn: Callable, *args) -> process.PROC:
+def proc(fn: Optional[Callable] = None, *args, **kwargs):
     """A decorator to create a process"""
-    def proc_():
-        fn(*args)
-    return process.Simple(proc_)
+    def decorator(fn):
+        def proc_():
+            fn(*args, **kwargs)
+        return process.Simple(proc_)
+    if fn is None:
+        return decorator
+    else:
+        return decorator(fn)
 
 T = TypeVar('T')
 def procs(variant_arg: Optional[Iterable[T]] = None,
-          variant_args: Optional[Iterable[Sequence]] = None) \
-        -> Callable[[Callable], process.PROC]:
-    """A decorator to create multiple processes"""
+          variant_args: Optional[Iterable[Sequence]] = None):
+    """ A decorator to create multiple processes """
     def decorator(fn: Callable) -> process.PROC:
-        if variant_arg is not None:
+        if variant_arg is not None and variant_args is None:
             return process.ParSyntax([proc(fn, arg) for arg in variant_arg])
-        if variant_args is not None:
+        if variant_arg is None and variant_args is not None:
             return process.ParSyntax([proc(fn, *args) for args in variant_args])
         raise ValueError("Must set one of variant_arg and "
                          "variant_args but not both")
@@ -71,9 +76,14 @@ def fork(proc: process.PROC) -> process.Handle:
     """ A decorator to fork a process """
     return proc.fork()
 
-def fork_proc(fn: Callable, *args) -> process.Handle:
+def fork_proc(fn: Optional[Callable] = None, *args, **kwargs):
     """ A decorate to create and fork a process """
-    return fork(proc(fn, *args))
+    def decorator(fn):
+        return fork(proc(fn, *args, **kwargs))
+    if fn is None:
+        return decorator
+    else:
+        return decorator(fn)
 
 def fork_procs(variant_arg: Optional[Iterable[T]] = None,
           variant_args: Optional[Iterable[Sequence]] = None) \
@@ -90,3 +100,41 @@ def run(proc: process.PROC) -> None:
 
 def stop() -> None:
     raise Stopped
+
+def gen_proc(gen=None, in_channel=None, out_channel=None):
+    def decorator(gen):
+        if inspect.isgeneratorfunction(gen):
+            gen = gen()
+        processes = []
+        if in_channel is not None:
+            @proc
+            @repeat
+            def read():
+                try:
+                    gen.send(~in_channel)
+                except StopIteration:
+                    raise Stopped
+            processes.append(read)
+        if out_channel is not None:
+            @proc
+            @repeat
+            def write():
+                try:
+                    out_channel << next(gen)
+                except StopIteration:
+                    out_channel.close()
+                    raise Stopped
+            processes.append(write)
+        return process.ParSyntax(processes)
+    if gen is None:
+        return decorator
+    else:
+        return decorator(gen)
+
+def fork_gen_proc(gen=None, in_channel=None, out_channel=None)
+    def decorator(fn):
+        return fork(gen_proc(gen, in_channel, out_channel))
+    if gen is None:
+        return decorator
+    else:
+        return decorator(gen)

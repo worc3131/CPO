@@ -1,4 +1,6 @@
 
+from __future__ import annotations
+
 from abc import ABCMeta
 import time
 
@@ -21,22 +23,27 @@ class Singleton(type):
         return cls._instances[cls]
 
 
-class Nanoseconds(int):
+class Nanoseconds(float):
     def to_seconds(self) -> float:
-        return self*1e-9
+        return self * 1e-9
 
-class Milliseconds(int):
-    pass
+    @staticmethod
+    def from_seconds(self, seconds: float) -> Nanoseconds:
+        return Nanoseconds(seconds * 1e9)
+
 
 def nano_time():
     return time.time_ns()
 
+
 class Stopped(Exception):
     pass
+
 
 class Closed(Stopped):
     def __init__(self, name):
         super().__init__(f'Closed({name})')
+
 
 def get_prop_else(name, orelse, coerce=None):
     raise NotImplementedError

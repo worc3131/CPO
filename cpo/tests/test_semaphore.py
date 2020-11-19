@@ -42,8 +42,8 @@ def test_count_semaphore_max():
     sem = CountingSemaphore(5)
     vl = AtomicNum(0)
     res = []
-    @fork_procs(range(100))
-    def worker(i):
+    @procs(range(100))
+    def workers(i):
         for _ in range(50):
             with sem:
                 vl.inc(1)
@@ -52,6 +52,6 @@ def test_count_semaphore_max():
                 assert v <= 5
                 res.append(v)
                 vl.dec(1)
-    time.sleep(0.5)
+    workers()
     print(collections.Counter(res))
     assert len(set(res)) == 5
