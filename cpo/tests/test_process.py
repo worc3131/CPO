@@ -1,7 +1,7 @@
 
 from cpo import *
 
-def test_init():
+def test_process__init():
     c = OneOne()
     def work():
         pass
@@ -27,7 +27,7 @@ def test_iter_to_channel():
     p = pw | read
     p()
 
-def test_process():
+def test_process_wo_channel():
     v = 0
     @proc
     def pass_():
@@ -36,7 +36,7 @@ def test_process():
     pass_()
     assert v == 1
 
-def test_process2():
+def test_process_with_channel():
     c = OneOne()
     result = 0
     @proc

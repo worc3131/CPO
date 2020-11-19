@@ -3,11 +3,11 @@ import time
 
 from cpo import *
 
-def test_init():
+def test_debugger_init():
     d = DEBUGGER()
     d.show_cso_state()
 
-def test_runs():
+def test_debugger_runs():
     N = 5
     chan = N2N(N, N)
     forks = [OneOne() for i in range(N)]

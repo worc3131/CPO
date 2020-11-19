@@ -4,7 +4,7 @@ import time
 
 from cpo import *
 
-def test_init():
+def test_channel_init():
     OneOne()
     N2N()
     ManyOne()

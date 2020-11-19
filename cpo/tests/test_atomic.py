@@ -1,7 +1,7 @@
 
 from cpo import *
 
-def test_init():
+def test_atomic_init():
     Atomic("hello")
     AtomicNum(0)
     AtomicCounter(2)

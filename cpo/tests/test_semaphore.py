@@ -5,7 +5,7 @@ import time
 
 from cpo import *
 
-def test_init():
+def test_semaphore_init():
     BooleanSemaphore()
     CountingSemaphore()
 
