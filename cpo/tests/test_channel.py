@@ -1,5 +1,5 @@
 
-import threading
+import pytest
 import time
 
 from cpo import *
@@ -14,14 +14,14 @@ def test_channel_init():
     N2NBuf()
 
 def test_oneone():
-    c = OneOne('oneone_channel')
+    c = OneOne()
     @fork_proc
     def write():
         c << 2
     assert ~c == 2
 
 def test_oneone_write_waits():
-    c = OneOne('oneone_channel')
+    c = OneOne()
     @fork_proc
     def write():
         c << 3
@@ -32,7 +32,7 @@ def test_oneone_write_waits():
     assert not write.is_alive()
 
 def test_oneone_read_waits():
-    c = OneOne('oneone_channel')
+    c = OneOne()
     @fork_proc
     def read():
         ~c
@@ -43,7 +43,7 @@ def test_oneone_read_waits():
     assert not read.is_alive()
 
 def test_oneone_multiple():
-    c = OneOne('oneone_channel')
+    c = OneOne()
     l = [x*(x-20) for x in range(100)]
     @fork_proc
     def write():
@@ -53,11 +53,69 @@ def test_oneone_multiple():
         assert ~c == x
 
 def test_oneone_strings():
-    c = OneOne('oneone_channel')
+    c = OneOne()
     @fork_proc
     def write():
         c << "hello world"
     assert ~c == "hello world"
+
+def test_oneone_close():
+    c = OneOne()
+    c.close()
+    with pytest.raises(Closed):
+        ~c
+
+def test_oneone_extended_rendezvous():
+    c = OneOne()
+    fork_proc(lambda: c << 5)
+    ~c(lambda x: 2*x) == 10
+    fork_proc(lambda: c << 7)
+    @c
+    def er(x):
+        return 3*x
+    assert ~er == 21
+    x = 0
+    @proc
+    def counter():
+        nonlocal x
+        for _ in range(100):
+            c << x
+            x += 1
+        c.close()
+    @proc
+    @repeat
+    def checker():
+        nonlocal x
+        assert ~c(lambda v: v == x)
+    (counter | checker)()
+    assert x == 100
+
+def test_oneone_read_before():
+    c = OneOne()
+    assert c.read_before(Nanoseconds(1)) is None
+    fork_proc(lambda: c << 2)
+    assert c.read_before(Nanoseconds.from_seconds(1)) == 2
+    @fork_proc
+    def p():
+        time.sleep(0.2)
+        c << 5
+    assert c.read_before(Nanoseconds.from_seconds(0.15)) is None
+    assert c.read_before(Nanoseconds.from_seconds(0.15)) == 5
+
+def test_oneone_write_before():
+    c = OneOne()
+    assert not c.write_before(Nanoseconds(1), 0)
+    @fork_proc
+    def p():
+        assert ~c == 1
+    assert c.write_before(Nanoseconds.from_seconds(0.1), 1)
+    assert not c.write_before(Nanoseconds.from_seconds(0.1), 2)
+    @fork_proc
+    def p():
+        time.sleep(0.2)
+        assert ~c == 4
+    assert not c.write_before(Nanoseconds.from_seconds(0.15), 3)
+    assert c.write_before(Nanoseconds.from_seconds(0.15), 4)
 
 def test_manymany():
     c = N2N(5, 5, "", False, False)
