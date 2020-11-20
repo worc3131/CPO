@@ -31,9 +31,15 @@ class Nanoseconds(float):
     def from_seconds(seconds: float) -> Nanoseconds:
         return Nanoseconds(seconds * 1e9)
 
+    def __add__(self, other: Nanoseconds):
+        return Nanoseconds(float(self) + float(other))
+
+    def __sub__(self, other: Nanoseconds):
+        return Nanoseconds(float(self) - float(other))
+
 
 def nano_time():
-    return time.time_ns()
+    return Nanoseconds(time.time_ns())
 
 
 class Stopped(Exception):
