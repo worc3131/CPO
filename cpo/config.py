@@ -1,7 +1,7 @@
 
 log_size = 50
 logging = 0
-# port = 0
+port = 0
 # suppress = ''
 
 # poolKIND ='ADAPTIVE'

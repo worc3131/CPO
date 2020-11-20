@@ -26,7 +26,8 @@ class UnpooledExecutor(CPOExecutor):
         with threads.StackSize(stack_size):
             thread = threading.Thread(
                 target=runnable.run,
-                name='cpo-unpooled-%d' % self.thread_count.inc(1)
+                name='cpo-unpooled-%d' % self.thread_count.inc(1),
+                daemon=True,
             )
         thread.start()
 
