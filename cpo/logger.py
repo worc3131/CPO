@@ -35,7 +35,7 @@ class Logger(Debuggable):
         self.lock = threading.Lock()
         self.register()
 
-    def log(self, bits: int, text):
+    def log(self, text, bits: int = 0xFFFFFFFF):
         if self.mask & bits != bits:
             with self.lock:
                 frame: Optional[types.FrameType] = inspect.currentframe()
