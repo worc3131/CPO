@@ -50,10 +50,14 @@ class Logger(Debuggable):
                     text
                 )
                 self.entries.append(message)
-                if len(self.entries) > self.log_size:
+                if self.log_size > 0 and len(self.entries) > self.log_size:
                     self.entries.popleft()
 
     __call__ = log
+
+    @property
+    def num_entries(self):
+        return len(self.entries)
 
     def show_state(self, file):
         util.synced_print(f'{str(self)} Log', *self.entries, file=file)
