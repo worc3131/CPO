@@ -63,6 +63,8 @@ class _Flag(semaphore.Semaphore):
                     threads.park_current_thread(left)
                     if deadline < util.nano_time():
                         outcome, waiting = False, False
+        if outcome is False:
+            self._waiting.set(None)
         return outcome
 
     def _get_waiting(self) -> Optional[threading.Thread]:
