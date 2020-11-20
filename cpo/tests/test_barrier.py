@@ -53,6 +53,6 @@ def test_combining_barrier():
     launch(2)
     assert get() == (2, 0, -1)
     launch(1)
-    assert get() == (4, 3, 1+2+3)
+    assert get() == (3, 3, 1+2+3)
     launch(3)
     assert get() == (6, 6, 4+5+6)
