@@ -35,8 +35,8 @@ class Logger(Debuggable):
         self.lock = threading.Lock()
         self.register()
 
-    def log(self, text, bits: int = 0xFFFFFFFF):
-        if self.mask & bits != bits:
+    def log(self, text, bits: Optional[int] = None):
+        if bits is None or self.mask & bits != bits:
             with self.lock:
                 frame: Optional[types.FrameType] = inspect.currentframe()
                 if frame is None:
@@ -47,7 +47,7 @@ class Logger(Debuggable):
                     util.nano_time(),
                     threads.get_thread_identity(threading.current_thread()),
                     tb,
-                    text()
+                    text
                 )
                 self.entries.append(message)
                 if len(self.entries) > self.log_size:
