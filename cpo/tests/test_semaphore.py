@@ -18,7 +18,7 @@ def test_bool_semaphore():
         c << i
         s.release()
     for i in range(5):
-        threading.Thread(target=worker, args=(i,)).start()
+        threading.Thread(target=worker, args=(i,), daemon=True).start()
         time.sleep(0.2)
     assert c.is_empty()
     s.release()

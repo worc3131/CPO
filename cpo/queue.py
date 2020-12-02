@@ -52,9 +52,8 @@ class LockFreeQueue(Queue[T]):
 
     def peek(self) -> Optional[T]:
         with self.queue.mutex:
-            # forgive me
+            # slow?
             return next(iter(self.queue.queue), None)
-
 
     def remove_first(self) -> None:
         v = self.dequeue()
