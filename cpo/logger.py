@@ -60,8 +60,8 @@ class Logger(Debuggable):
         return len(self.entries)
 
     def show_state(self, file):
-        util.synced_print(f'{str(self)} Log', *self.entries, file=file)
+        util.synced_print(f'{str(self)} Log', *self.entries, sep='\n\t', file=file)
 
     print_state = show_state
 
-log = Logger("Logging", config.log_size, config.logging)
+LOG = Logger("Logging", config.log_size, config.logging)

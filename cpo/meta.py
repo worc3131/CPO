@@ -49,7 +49,8 @@ def attempt(body: Optional[Callable] = None,
         return decorator(body)
 
 def repeat(body: Optional[Callable] = None,
-           guard: Optional[Callable[[], bool]] = None) \
+           guard: Optional[Callable[[], bool]] = None,
+           finally_: Optional[Callable[[], None]] = None) \
         -> Callable:
     """ A decorator to repeat an action """
     def decorator(body):
@@ -65,7 +66,11 @@ def repeat(body: Optional[Callable] = None,
                 except Stopped:
                     go = False
                 except Exception:
+                    if finally_ is not None:
+                        finally_()
                     raise
+            if finally_ is not None:
+                finally_()
         return inner
     if body is None:
         return decorator

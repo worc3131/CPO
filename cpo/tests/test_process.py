@@ -53,15 +53,15 @@ def test_process_with_channel():
     assert result == 234
 
 def test_close_channel():
-    c1 = OneOne()
-    c2 = OneOne()
+    c1 = OneOne('write_to_square')
+    c2 = OneOne('square_to_read')
     @proc
     def write():
         for x in range(500):
             c1 << x
         c1.close()
     @proc
-    @repeat(guard=lambda: c2.close())
+    @repeat(finally_=lambda: c2.close())
     def square():
         c2 << (~c1)**2
     result = 0
