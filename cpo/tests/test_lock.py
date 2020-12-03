@@ -4,18 +4,20 @@ from cpo import *
 def test_lock_init():
     SimpleLock()
 
+
 def test_simplelock_acq():
     lock = SimpleLock()
     val = 0
     @procs(range(1000))
     def workers(i):
         nonlocal val
-        for _ in range(1000):
-            lock.acquire()
+        for _ in range(100):
+            lock.lock()
             val += 1
-            lock.release()
+            lock.unlock()
     workers()
-    assert val == 1000 * 1000
+    DEBUGGER()
+    assert val == 1000 * 100
 
 def test_simplelock_with():
     lock = SimpleLock()
@@ -24,12 +26,12 @@ def test_simplelock_with():
     @procs(range(1000))
     def workers(i):
         nonlocal val
-        for _ in range(1000):
+        for _ in range(100):
             with lock:
                 val += 1
 
     workers()
-    assert val == 1000 * 1000
+    assert val == 1000 * 100
 
 def test_simplelock_withf():
     lock = SimpleLock()
@@ -40,8 +42,8 @@ def test_simplelock_withf():
     @procs(range(1000))
     def workers(i):
         nonlocal val
-        for _ in range(1000):
+        for _ in range(100):
             lock.with_lock(f)
     workers()
-    assert val == 1000 * 1000
+    assert val == 1000 * 100
 
