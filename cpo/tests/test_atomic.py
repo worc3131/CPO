@@ -36,5 +36,3 @@ def test_atomic_counter():
             next(c)
     workers()
     assert c.get() == 1000*1000
-
-
