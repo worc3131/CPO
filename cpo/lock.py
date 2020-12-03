@@ -37,16 +37,11 @@ class _SimpleLockFactory(NameGenerator, metaclass=Singleton):
     def __init__(self):
         super().__init__('SimpleLock')
 
-    def __call__(self, available: bool = False,
-                 name: Optional[str] = None,
-                 fair: bool = False,
-                 parent=None,
-                 spin: int = 5) -> _SimpleLock:
+    def __call__(self, name: Optional[str] = None,
+                 parent=None) -> _SimpleLock:
         if name is None:
             name = self._new_name()
-        if fair:
-            raise NotImplementedError
-        return _SimpleLock(available, name, fair, parent, spin)
+        return _SimpleLock(True, name, False, parent, 200)
 
 SimpleLock = _SimpleLockFactory()
 
