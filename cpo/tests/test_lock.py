@@ -16,7 +16,6 @@ def test_simplelock_acq():
             val += 1
             lock.unlock()
     workers()
-    DEBUGGER()
     assert val == 1000 * 100
 
 def test_simplelock_with():
