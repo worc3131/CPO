@@ -23,11 +23,14 @@ def test_flag():
 
 def test_flag_acquire_once():
     f = Flag()
-    fork_proc(lambda: f.acquire())
+    @fork_proc
+    def worker():
+        f.acquire()
     with pytest.raises(Exception):
         f.acquire()
     with pytest.raises(Exception):
         f.try_acquire(Nanoseconds.from_seconds(1))
+    f.release()
 
 def test_flag_release_once():
     f = Flag()
@@ -58,5 +61,3 @@ def test_flag_try_acquire():
     assert f.try_acquire(Nanoseconds.from_seconds(0.15))
     assert f.try_acquire(Nanoseconds.from_seconds(0.15))
     f.acquire()
-
-
