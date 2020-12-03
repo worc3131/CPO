@@ -37,11 +37,11 @@ def test_simplelock_withf():
     lock = SimpleLock()
     val = 0
     def f():
+        nonlocal val
         val += 1
 
     @procs(range(1000))
     def workers(i):
-        nonlocal val
         for _ in range(100):
             lock.with_lock(f)
     workers()
