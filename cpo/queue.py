@@ -48,7 +48,10 @@ class LockFreeQueue(Queue[T]):
     enqueue_first = enqueue
 
     def dequeue(self) -> Optional[T]:
-        return self.queue.get(block=False)
+        try:
+            return self.queue.get(block=False)
+        except _queue.Empty:
+            return None
 
     def peek(self) -> Optional[T]:
         with self.queue.mutex:

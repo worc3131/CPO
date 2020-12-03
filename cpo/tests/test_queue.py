@@ -9,7 +9,7 @@ def test_queue_init():
 def test_lockfreequeue_endequeue():
     q = LockFreeQueue()
     q.enqueue(42)
-    assert q.dequeue(42) == 42
+    assert q.dequeue() == 42
     assert q.dequeue() is None
 
 def test_lockfreequeue_peek():
@@ -22,7 +22,9 @@ def test_lockfreequeue_peek():
 def test_lockfreequeue_remove_first():
     q = LockFreeQueue()
     q.enqueue(1)
-    assert q.remove_first() == 1
+    assert q.length() == 1
+    q.remove_first()
+    assert q.length() == 0
     with pytest.raises(ValueError):
         q.remove_first()
 
