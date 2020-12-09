@@ -44,7 +44,7 @@ class Handle(util.Runnable):
 
     def start(self) -> None:
         assert executor.executor is not None
-        # widgeter.widgetfactor(widget).widget(widget=widget)
+        # widgeter.widgetfactory(widget).widget(widget=Widget(widget=foo))
         executor.executor.execute(self, self.stack_size)
 
     def join(self) -> None:
