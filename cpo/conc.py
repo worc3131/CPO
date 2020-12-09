@@ -70,10 +70,12 @@ class Lock(Lockable):
     def get_underlying_lock(self):
         return self._lock
 
+
 class FairRLock(RLockClass):
     # TODO
     def __init__(self):
         raise NotImplementedError
+
 
 class Tracked:
 
@@ -85,6 +87,7 @@ class Tracked:
 
     def latest_owners(self):
         raise NotImplementedError
+
 
 class TrackedMixin(Tracked, ABC):
 
@@ -115,14 +118,18 @@ class TrackedMixin(Tracked, ABC):
             return []
         return [self._last_owner]
 
+
 class TrackedNoLock(TrackedMixin, NoLockClass, Lockable):
     pass
+
 
 class TrackedLock(TrackedMixin, Lock):
     pass
 
+
 class TrackedRLock(TrackedMixin, RLockClass, Lockable):
     pass
+
 
 class TrackedFairRLock(TrackedMixin, FairRLock, Lockable):
     pass
