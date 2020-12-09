@@ -53,5 +53,4 @@ def test_count_semaphore_max():
                 res.append(v)
                 vl.dec(1)
     workers()
-    print(collections.Counter(res))
     assert len(set(res)) == 5
