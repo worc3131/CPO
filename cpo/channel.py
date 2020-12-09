@@ -15,12 +15,15 @@ from . import util
 from .util import Nanoseconds, Singleton, synced_print
 
 class PortState(metaclass=Singleton):
+    """A type denoting the state of readiness/commitment of a port. Used in the
+    implementation of alternations"""
     def __str__(self) -> str:
         raise NotImplementedError
     def to_state_string(self) -> str:
         raise NotImplementedError
 
 class _CLOSEDSTATE(PortState):
+    """The port is closed"""
     def __str__(self):
         return "CLS"
     def to_state_string(self) -> str:
@@ -28,6 +31,7 @@ class _CLOSEDSTATE(PortState):
 CLOSEDSTATE = _CLOSEDSTATE()
 
 class _UNKNOWNSTATE(PortState):
+    """The readiness of the port is unknown"""
     def __str__(self):
         return "UNK"
     def to_state_string(self) -> str:
@@ -35,6 +39,9 @@ class _UNKNOWNSTATE(PortState):
 UNKNOWNSTATE = _UNKNOWNSTATE()
 
 class _READYSTATE(PortState):
+    """The port's channel is in a state that guarantees the next unconditional
+    input/output action on the port can be invoked with no danger of an
+    unbounded wait."""
     def __str__(self):
         return "RDY"
     def to_state_string(self) -> str:
@@ -46,28 +53,53 @@ TI = TypeVar('TI')
 class InPort(Generic[TI]):
 
     def __invert__(self) -> Optional[TI]:
+        """ Block until a value is available for input, then read and return it.
+
+        Returns: The value from the channel.
+
+        """
         raise NotImplementedError
 
     def read_before(self, ns: Nanoseconds) -> Optional[TI]:
+        """ Block until either a value is available or ns nanseconds have
+        passed. Then return the available value or None.
+
+        Args:
+            ns: The number of nanoseconds to wait.
+
+        Returns: A value from the channel if one was available with the time
+        limit else None.
+
+        """
         raise NotImplementedError
 
     def __call__(self, func) -> InPortFunc[TI]:
+        """Block until a value t is available, then return f(t).
+        If our channel is c and our function is f, the full syntax is ~c(f).
+        """
         return InPortFunc(self, func)
 
     def extended_rendezvous(self, func):
+        """BLock until a value t is available for input then return f(t)"""
         raise NotImplementedError
 
     def close_in(self):
+        """Signal that no further attempt will be made to input from the
+        invoking thread. This is idempotent."""
         raise NotImplementedError
 
     def can_input(self) -> bool:
+        """Returns False if no further input will be supplied by this port.
+        Returning true is not a guarantee that further input will supplied."""
         raise NotImplementedError
 
     @property
     def nothing(self) -> Optional[TI]:
+        """The null value for this port"""
         return None
 
     def in_port_state(self) -> PortState:
+        """The current state of this port for alternation implementations"""
         raise NotImplementedError
 
     def __iter__(self):
@@ -87,52 +119,85 @@ class InPortFunc(Generic[TI]):
         self.func = func
 
     def __invert__(self):
+        """Get from the port and apply the function"""
         return self.port.extended_rendezvous(self.func)
 
 TO = TypeVar('TO')
 class OutPort(Generic[TO]):
 
-    def __lshift__(self, val: TO) -> Optional[TO]:
+    def __lshift__(self, value: TO) -> Optional[TO]:
+        """Output value to the port's channel"""
         raise NotImplementedError
 
     def write_before(self, nswait: Nanoseconds, value: TO) -> bool:
+        """Output value to the port's channel before nswait has elapsed and return
+        true, or else false.
+
+
+        Args:
+            nswait: The number of nanoseconds to wait.
+            value: The value to write.
+
+        Returns: Whether the write was successful.
+
+        """
         raise NotImplementedError
 
     def close_out(self) -> None:
+        """Signal that no further values will be output from the invoking
+        thread. This is idempotent."""
         raise NotImplementedError
 
     def can_output(self) -> bool:
+        """Returns false if no further output can be accepted by this port.
+        Returning true is not a guarantee that further output will be accepted"""
         raise NotImplementedError
 
     def out_port_state(self) -> PortState:
+        """Current state of this port for use in alternation implementations"""
         raise NotImplementedError
 
 T = TypeVar('T')
 class Chan(InPort[T], OutPort[T], Named, Debuggable, ABC):
+    """A channel with an in and out port"""
 
     def __init__(self):
         Debuggable.__init__(self)
 
     def close(self) -> None:
+        """Signal that the channel is to be closed forthwith"""
         raise NotImplementedError
 
     def out_port_event(self, port_state: PortState) -> None:
-        pass
+        """The channel has just changd its state in a way that will affect
+        out_port_state()"""
+        raise NotImplementedError
 
     def in_port_event(self, port_state: PortState) -> None:
-        pass
+        """The channel has just changd its state in a way that will affect
+          in_port_state()"""
+        raise NotImplementedError
 
 class SyncChan(Chan[T], ABC):
+    """A channel which is guaranteed to be synchronous."""
 
     def __init__(self):
         Chan.__init__(self)
 
 class SharedChan(Chan[T], ABC):
+    """A channel whose input and output ports may be shared."""
     pass
 
 class _OneOne(SyncChan[T]):
+    """A synchronised channel to be used by at most one reader and at most one
+     writer process simultaneously."""
 
     def __init__(self, name):
+        """
+
+        Args:
+            name: The name of the channel for debugging.
+        """
         SyncChan.__init__(self)
         self.set_name(name)
         self.reader: Atomic[Optional[threading.Thread]] = Atomic(None)
@@ -144,16 +209,21 @@ class _OneOne(SyncChan[T]):
         self.register()
 
     def _finished_read(self) -> int:
+        """Increment the count of finished reads"""
         return self.reads.inc(1)
 
     def _finished_write(self) -> int:
+        """Increment the count of finished writes"""
         return self.writes.inc(1)
 
     def finished_rw(self) -> str:
+        """Get a string repr of the number of finished reads and writes"""
         return f'(READ {self.reads}, WRITTEN {self.writes})'
 
     @property
-    def in_port_state(self):
+    def in_port_state(self) -> PortState:
+        """READY if not closed and a writer is waiting to sync (else CLOSED or
+         UNKNOWN). Used by alternation implementations."""
         if self.closed.get():
             return CLOSEDSTATE
         if self.full.get():
@@ -161,7 +231,9 @@ class _OneOne(SyncChan[T]):
         return UNKNOWNSTATE
 
     @property
-    def out_port_state(self):
+    def out_port_state(self) -> PortState:
+        """READY if not closed and a reader is waiting to sync (else CLOSED or
+         UNKNOWN). Used by alternation implementations."""
         if self.closed.get():
             return CLOSEDSTATE
         if self.reader.get() is not None and not self.full.get():
@@ -173,6 +245,7 @@ class _OneOne(SyncChan[T]):
         return OneOne
 
     def current_state(self) -> str:
+        """Return a string giving the current state of the channel"""
         wr = self.reader.get()
         ww = self.writer.get()
         if ww is None and wr is None:
@@ -193,6 +266,7 @@ class _OneOne(SyncChan[T]):
         return f'{self.name}: {closed} {self.current_state}'
 
     def show_state(self, file) -> None:
+        """Print the current state of the channel to file"""
         synced_print(f"CHANNEL {self.name}: {self.name_generator._kind} ",
                      end='', file=file)
         if self.closed.get(): synced_print('(CLOSED) ', end='', file=file)
@@ -333,6 +407,12 @@ class _OneOneFactory(NameGenerator, metaclass=Singleton):
         super().__init__('OneOne')
 
     def __call__(self, name: Optional[str] = None) -> _OneOne:
+        """
+        Args:
+            name: The name for the channel.
+
+        Returns: A new OneOne channel
+        """
         if name is None:
             name = self._new_name()
         return _OneOne(name)
@@ -340,6 +420,7 @@ class _OneOneFactory(NameGenerator, metaclass=Singleton):
 OneOne = _OneOneFactory()
 
 class _N2N(SharedChan[T], _OneOne[T]):
+    """"""
 
     def __init__(self, writers: int, readers: int,
                  name: str, fair_out: bool, fair_in: bool) -> None:
