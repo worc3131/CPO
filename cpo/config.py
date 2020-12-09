@@ -4,8 +4,8 @@ logging = 0
 port = 0
 # suppress = ''
 
-# poolKIND ='ADAPTIVE'
-# poolMAX = 1024
+poolKIND ='ADAPTIVE'
+poolMAX = 1024
 # poolREPORT = False
 # poolG = 0
 # poolM = 6
