@@ -3,20 +3,7 @@ import time
 
 from cpo import *
 
-def run_demo(Solution):
-    N_READERS = 20
-    N_WRITERS = 20
-    DATA_LEN = 10000
-    RUN_TIME = 15  # seconds
-
-    sol = Solution(DATA_LEN)
-    sol.spawn_readers(N_READERS)
-    sol.spawn_writers(N_WRITERS)
-    time.sleep(RUN_TIME)
-    sol.kill()
-    return sol.get_result()
-
-def main():
+def run_demo():
     Sols = [
         BadRWSolution,
         ReadFavouredRWSolution,
@@ -24,11 +11,29 @@ def main():
         BalancedRWSolution,
     ]
     for Sol in Sols:
-        res = run_demo(Sol)
+        run_solution(Sol)
+    return Sols
+
+def run_solution(Solution):
+    N_READERS = 20
+    N_WRITERS = 20
+    DATA_LEN = 10000
+    RUN_TIME = 5  # seconds
+
+    sol = Solution(DATA_LEN)
+    sol.spawn_readers(N_READERS)
+    sol.spawn_writers(N_WRITERS)
+    time.sleep(RUN_TIME)
+    sol.kill()
+    return sol
+
+def main():
+    Sols = run_demo()
+    for Sol in Sols:
         print(
             Sol.describe(),
             'We got...',
-            res
+            Sol.get_result()
         )
 
 class RWSolution:

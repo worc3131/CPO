@@ -59,7 +59,7 @@ def run_demo():
 
     return histories
 
-def main():
+def run_demo_and_check():
     hist = run_demo()
     flat_hist = [x for h in hist for x in h]
     flat_sorted_hist = sorted(flat_hist, key=lambda x: x.actual)
@@ -68,6 +68,8 @@ def main():
         assert prv.vector[nxt.idx] < nxt.vector[nxt.idx]
     assert min(flat_sorted_hist[-1].vector) > 0
 
+def main():
+    run_demo_and_check()
     print('Tick-tock all good with the clock')
 
 if __name__ == '__main__':
