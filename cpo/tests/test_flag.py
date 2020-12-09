@@ -26,6 +26,7 @@ def test_flag_acquire_once():
     @fork_proc
     def worker():
         f.acquire()
+    time.sleep(0.1)
     with pytest.raises(Exception):
         f.acquire()
     with pytest.raises(Exception):
