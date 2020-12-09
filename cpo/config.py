@@ -12,4 +12,4 @@ poolMAX = 1024
 # poolK = 0
 
 def get(key, default):
-    return getattr(locals(), key, default)
+    return globals().get(key, default)
