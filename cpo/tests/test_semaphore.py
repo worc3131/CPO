@@ -26,6 +26,12 @@ def test_bool_semaphore():
         assert ~c == i
     assert c.is_empty()
 
+def test_bool_semaphore_try_acquire():
+    s = BooleanSemaphore(available=False)
+    assert not s.try_acquire(Nanoseconds.from_seconds(0.1))
+    s = BooleanSemaphore(available=True)
+    assert s.try_acquire(Nanoseconds.from_seconds(0.1))
+
 def test_bool_semaphore_max():
     sem = BooleanSemaphore(available=True)
     vl = AtomicNum(0)

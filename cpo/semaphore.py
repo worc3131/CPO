@@ -128,7 +128,7 @@ class _BooleanSemaphore(Semaphore):
                 trying = False
                 outcome = True
             else:
-                threads.park_current_thread_nanos(left)
+                threads.park_current_thread(left)
                 left = deadline - util.nano_time()
                 trying = left > 0
         self._waiting.remove_first()
@@ -246,7 +246,7 @@ class _CountingSemaphore(Semaphore):
                 trying = False
                 outcome = True
             else:
-                threads.park_current_thread_nanos(left)
+                threads.park_current_thread(left)
                 left = deadline - util.nano_time()
                 trying = left > 0
         self._waiting.remove_first()
