@@ -40,8 +40,8 @@ class Monitor(Debuggable, ABC):
         w = self.get_waiting()
         return not (own == [] and len(w) == 0)
 
-    def new_condition(self):
-        return threading.Condition
+    def new_condition(self) -> threading.Condition:
+        return threading.Condition(lock=self.lock)
 
     def with_lock(self, body):
         self.lock.acquire()
