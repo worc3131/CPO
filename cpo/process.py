@@ -107,6 +107,9 @@ class PROC(metaclass=ABCMeta):
     def __or__(self, other: PROC) -> PROC:
         return ParSyntax([self, other])
 
+    def __rshift__(self, other: PROC):
+        return OrderedSyntax([self, other])
+
 
 # lock for printing exceptions, to stop lots of exceptions being
 # overwritten on touch of each other
@@ -229,6 +232,24 @@ class Par(PROC):
         return handle
 
 
+class OrderedProcs(PROC):
+
+    def __init__(self, name: str, procs: Sequence[PROC]) -> None:
+        super().__init__()
+        self.procs = procs
+        self._stack_size = 0
+        self._name = name
+
+    def fork(self) -> Handle:
+        assert self.name is not None
+        handle = Handle(self.name, self.__call__, conc.CountDownLatch())
+        handle.start()
+        return handle
+
+    def __call__(self) -> None:
+        for p in self.procs:
+            p()
+
 class ParException(Exception):
 
     def __init__(self, exceptions: Sequence[Exception]):
@@ -263,3 +284,30 @@ class ParSyntax(PROC):
         else:
             # PROC
             return ParSyntax(self.procs + [other])
+
+
+class OrderedSyntax(PROC):
+
+    def __init__(self, _procs: List[PROC]):
+        self.procs = _procs
+
+    @property
+    def compiled(self):
+        return OrderedProcs(self.name, self.procs)
+
+    def __call__(self):
+        return self.compiled()
+
+    def fork(self):
+        return self.compiled.fork()
+
+    @property
+    def name(self):
+        return ">>".join(str(x.name) for x in self.procs)
+
+    def __rshift__(self, other: Union[PROC, OrderedSyntax]):
+        if isinstance(other, OrderedSyntax):
+            return OrderedSyntax(self.procs + other.procs)
+        else:
+            # PROC
+            return OrderedSyntax(self.procs + [other])
