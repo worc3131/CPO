@@ -6,8 +6,11 @@ import time
 
 import inspect
 import threading
-from typing import Dict, Optional
+from typing import Dict, TypeVar, Optional
 
+T = TypeVar('T')
+def identity_fn(x: T) -> T:
+    return x
 
 class Runnable(metaclass=ABCMeta):
 
