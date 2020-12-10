@@ -4,7 +4,7 @@ from __future__ import annotations
 import threading
 from abc import ABC
 import queue
-from typing import Generic, List, Optional, TypeVar
+from typing import Generic, List, Optional, TypeVar, Callable
 
 from .atomic import Atomic, AtomicNum
 from . import conc
@@ -50,6 +50,7 @@ READYSTATE = _READYSTATE()
 
 
 TI = TypeVar('TI')
+O = TypeVar('O')
 class InPort(Generic[TI]):
 
     def __invert__(self) -> Optional[TI]:
@@ -79,8 +80,8 @@ class InPort(Generic[TI]):
         """
         return InPortFunc(self, func)
 
-    def extended_rendezvous(self, func):
-        """BLock until a value t is available for input then return f(t)"""
+    def extended_rendezvous(self, func: Callable[[TI], O]) -> O:
+        """Block until a value t is available for input then return f(t)"""
         raise NotImplementedError
 
     def close_in(self):
@@ -292,17 +293,23 @@ class _OneOne(SyncChan[T]):
         return value
 
     def __invert__(self) -> T:
+        return self.do_read(util.identity_fn)
+
+    def extended_rendezvous(self, func: Callable[[T], O]) -> O:
+        return self.do_read(func)
+
+    def do_read(self, fn: Optional[Callable]):
         self.check_open()
         current = threading.current_thread()
         last_reader: threading.Thread = self.reader.get_and_set(current)
-        assert last_reader is None, f'~c() overtaking ' \
+        assert last_reader is None, f'~c({"f" if fn else ""}) overtaking ' \
                                   f'[{threads.get_thread_identity(last_reader)}]' \
                                   f' in {threads.get_thread_identity(current)}'
         self.out_port_event(READYSTATE)
         while not self.closed.get() and not self.full.get():
             threads.park_current_thread()
         self.check_open()
-        result = self.buffer
+        result = fn(self.buffer)
         self.buffer = None
         self.full.set(False)
         threads.unpark(self.writer.get_and_set(None))
@@ -317,25 +324,6 @@ class _OneOne(SyncChan[T]):
             threads.unpark(self.reader.get_and_set(None))
             threads.unpark(self.writer.get_and_set(None))
             self.unregister()
-
-    def extended_rendezvous(self, func):
-        self.check_open()
-        current = threading.current_thread()
-        last_reader: threading.Thread = self.reader.get_and_set(current)
-        assert last_reader is None, f'~c(f) overtaking ' \
-                                  f'[{threads.get_thread_identity(last_reader)}]' \
-                                  f' in {threads.get_thread_identity(current)}'
-        self.out_port_event(READYSTATE)
-        while not self.closed.get() and not self.full.get():
-            threads.park_current_thread()
-        self.check_open()
-        result = func(self.buffer)
-        self.buffer = None
-        self.full.set(False)
-        threads.unpark(self.writer.get_and_set(None))
-        self.reader.set(None)
-        self._finished_read()
-        return result
 
     @property
     def can_input(self) -> bool:
