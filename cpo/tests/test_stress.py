@@ -16,7 +16,7 @@ def test_stress_proc():
 
 def test_stress_lock():
     lock = SimpleLock()
-    @procs(range(2000))
+    @procs(range(1000))
     def workers(i):
         for _ in range(100):
             with lock:
