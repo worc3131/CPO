@@ -171,12 +171,12 @@ class Chan(InPort[T], OutPort[T], Named, Debuggable, ABC):
     def out_port_event(self, port_state: PortState) -> None:
         """The channel has just changd its state in a way that will affect
         out_port_state()"""
-        raise NotImplementedError
+        pass
 
     def in_port_event(self, port_state: PortState) -> None:
         """The channel has just changd its state in a way that will affect
           in_port_state()"""
-        raise NotImplementedError
+        pass
 
 class SyncChan(Chan[T], ABC):
     """A channel which is guaranteed to be synchronous."""

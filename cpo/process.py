@@ -105,7 +105,8 @@ class PROC(metaclass=ABCMeta):
         return self
 
     def __or__(self, other: PROC) -> PROC:
-        return ParSyntax([other, self])
+        return ParSyntax([self, other])
+
 
 # lock for printing exceptions, to stop lots of exceptions being
 # overwritten on touch of each other
@@ -147,6 +148,7 @@ class Simple(PROC):
     def __call__(self) -> None:
         self.body()
 
+
 class IterToChannel(Simple):
 
     def __init__(self, iter_, channel_: channel.OutPort, name=None):
@@ -166,7 +168,6 @@ class IterToChannel(Simple):
             pass
         finally:
             self.channel_.close_out()
-
 
 
 class _SKIP(Simple):
@@ -243,12 +244,8 @@ class ParSyntax(PROC):
         self.procs = _procs
 
     @property
-    def revprocs(self):
-        return reversed(self.procs)
-
-    @property
     def compiled(self):
-        return Par(self.name, list(self.revprocs))
+        return Par(self.name, self.procs)
 
     def __call__(self):
         return self.compiled()
@@ -258,11 +255,11 @@ class ParSyntax(PROC):
 
     @property
     def name(self):
-        return "|".join(str(x.name) for x in self.revprocs)
+        return "|".join(str(x.name) for x in self.procs)
 
     def __or__(self, other: Union[PROC, ParSyntax]):
         if isinstance(other, ParSyntax):
-            return ParSyntax(other.procs + self.procs)
+            return ParSyntax(self.procs + other.procs)
         else:
             # PROC
-            return ParSyntax([other] + self.procs)
+            return ParSyntax(self.procs + [other])
