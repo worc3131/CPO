@@ -263,6 +263,7 @@ class ParSyntax(PROC):
 
     def __init__(self, _procs: List[PROC]):
         self.procs = _procs
+        self._stack_size = 0
 
     @property
     def compiled(self):
@@ -290,6 +291,7 @@ class OrderedSyntax(PROC):
 
     def __init__(self, _procs: List[PROC]):
         self.procs = _procs
+        self._stack_size = 0
 
     @property
     def compiled(self):

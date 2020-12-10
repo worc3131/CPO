@@ -125,3 +125,30 @@ def test_repeated_procs():
     for _ in range(M):
         p()
     assert n_runs == M
+
+def test_nested_procs():
+    runs = [0, 0, 0, 0, 0]
+    @proc
+    def W0():
+        assert runs[3: 5] == [0, 0]
+        runs[0] += 1
+    @proc
+    def W1():
+        assert runs[2:5] == [0, 0, 0]
+        runs[1] += 1
+    @proc
+    def W2():
+        assert runs[1] == 1
+        assert runs[3: 5] == [0, 0]
+        runs[2] += 1
+    @proc
+    def W3():
+        assert runs[:3] == [1, 1, 1]
+        runs[3] += 1
+    @proc
+    def W4():
+        assert runs[:3] == [1, 1, 1]
+        runs[4] += 1
+    p = (W0 | (W1 >> W2)) >> (W3 | W4)
+    p()
+    assert runs == [1, 1, 1, 1, 1]
