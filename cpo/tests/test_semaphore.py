@@ -1,6 +1,5 @@
 
 import collections
-import threading
 import time
 
 from cpo import *
@@ -18,7 +17,7 @@ def test_bool_semaphore():
         c << i
         s.release()
     for i in range(5):
-        threading.Thread(target=worker, args=(i,), daemon=True).start()
+        fork_proc(worker, i)
         time.sleep(0.2)
     assert c.is_empty()
     s.release()
