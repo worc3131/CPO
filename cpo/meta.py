@@ -10,7 +10,7 @@ def proc(fn: Optional[Callable] = None, *args, **kwargs):
     def decorator(fn):
         def proc_():
             fn(*args, **kwargs)
-        return process.Simple(proc_)
+        return process.Simple(proc_, name=fn)
     if fn is None:
         return decorator
     else:
@@ -29,8 +29,6 @@ def procs(variant_arg: Optional[Iterable[T]] = None,
                          "variant_args but not both")
     return decorator
 
-
-T = TypeVar('T')
 def ordered_procs(variant_arg: Optional[Iterable[T]] = None,
           variant_args: Optional[Iterable[Sequence]] = None):
     """ A decorator to create multiple ordered processes """
