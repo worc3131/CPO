@@ -14,7 +14,10 @@ def get_active_threads() -> Sequence[threading.Thread]:
 def get_thread_identity(thread: Optional[threading.Thread]):
     if thread is None:
         return "?"
-    return f'{thread.getName()}#{thread.ident}'
+    daemon = '_D'[thread.daemon]
+    alive = '_A'[thread.is_alive()]
+    status = daemon + alive
+    return f'{thread.getName()}#{status}#{thread.ident}'
 
 # python doesnt allow us to park threads, so this is a hack for now
 # the use of concurrency primitives will mean that the parking and
