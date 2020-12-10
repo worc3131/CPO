@@ -11,7 +11,7 @@ from .util import Nanoseconds
 class Monitor(Debuggable, ABC):
 
     def __init__(self, name: Optional[str] = None) -> None:
-        super().__init__(self)
+        super().__init__()
         self.lock = conc.TrackedRLock()
         if name is None:
             name = repr(self)
