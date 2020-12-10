@@ -50,7 +50,8 @@ class DEBUGGER:
                 handler = threading.Thread(
                     name="CSO Debugger Responder",
                     target=self.handle,
-                    args=(conn,)
+                    args=(conn,),
+                    daemon=True,
                 )
                 handler.start()
         finally:
