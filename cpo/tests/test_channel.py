@@ -65,15 +65,25 @@ def test_oneone_close():
     with pytest.raises(Closed):
         ~c
 
-def test_oneone_extended_rendezvous():
+def test_oneone_extended_rendezvous1():
     c = OneOne()
-    fork_proc(lambda: c << 5)
-    ~c(lambda x: 2*x) == 10
-    fork_proc(lambda: c << 7)
+    @fork_proc
+    def write_5():
+        c << 5
+    assert ~c(lambda x: 2*x) == 10
+
+def test_oneone_extended_rendezvous2():
+    c = OneOne()
+    @fork_proc
+    def write_7():
+        c << 7
     @c
     def er(x):
         return 3*x
     assert ~er == 21
+
+def test_oneone_extended_rendezvous3():
+    c = OneOne()
     x = 0
     @proc
     def counter():
@@ -160,23 +170,23 @@ def test_oneonebuf():
     def write():
         c << 2
         c << 3
-    time.sleep(0.5)
+    time.sleep(0.2)
     assert write.is_alive()
     assert ~c == 2
-    time.sleep(0.5)
+    time.sleep(0.2)
     assert not write.is_alive()
     assert ~c == 3
     @fork_proc
     def read():
         assert ~c == 4
         assert ~c == 5
-    time.sleep(0.5)
+    time.sleep(0.2)
     assert read.is_alive()
     c << 4
-    time.sleep(0.5)
+    time.sleep(0.2)
     assert read.is_alive()
     c << 5
-    time.sleep(0.5)
+    time.sleep(0.2)
     assert not read.is_alive()
 
 def test_n2nbuf():
@@ -186,10 +196,10 @@ def test_n2nbuf():
     def writers(i):
         c << i
         num_written.inc(1)
-    time.sleep(0.5)
+    time.sleep(0.2)
     assert num_written.get() == 2
     res = [~c]
-    time.sleep(0.5)
+    time.sleep(0.2)
     assert num_written.get() == 3
     res += [~c, ~c]
     assert(sorted(res) == [0, 1, 2])
@@ -197,11 +207,11 @@ def test_n2nbuf():
     @fork_procs(range(2))
     def reader(i):
         read[i] = ~c
-    time.sleep(0.5)
+    time.sleep(0.2)
     assert sorted(read) == [0, 0]
     c << 10
-    time.sleep(0.5)
+    time.sleep(0.2)
     assert sorted(read) == [0, 10]
     c << 20
-    time.sleep(0.5)
+    time.sleep(0.2)
     assert sorted(read) == [10, 20]
