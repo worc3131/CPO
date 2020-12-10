@@ -3,15 +3,51 @@ import pytest
 import time
 
 from cpo import *
+from cpo.channel import CLOSEDSTATE, _N2NBuf
+
+ALL_CHANNELS = [
+    OneOne,
+    N2N,
+    ManyOne,
+    OneMany,
+    ManyMany,
+    OneOneBuf,
+    N2NBuf,
+]
 
 def test_channel_init():
-    OneOne()
-    N2N()
-    ManyOne()
-    OneMany()
-    ManyMany()
-    OneOneBuf(1)
-    N2NBuf()
+    for Channel in ALL_CHANNELS:
+        Channel()
+
+def test_channel_str():
+    for Channel in ALL_CHANNELS:
+        c = Channel()
+        assert isinstance(str(c), str)
+        assert isinstance(repr(c), str)
+
+def test_channel_close():
+    for Channel in ALL_CHANNELS:
+        c = Channel()
+        assert c.can_input
+        assert c.can_output
+        c.close()
+        assert not c.can_input
+        assert not c.can_output
+        assert c.in_port_state is CLOSEDSTATE
+        assert c.out_port_state is CLOSEDSTATE
+
+def test_channel_timeout():
+    for Channel in ALL_CHANNELS:
+        c = Channel()
+        assert c.read_before(Nanoseconds.from_seconds(0.01)) is None
+        expected = isinstance(c, _N2NBuf)
+        assert c.write_before(Nanoseconds.from_seconds(0.01), 0) == expected
+        c.close()
+        # read / write should not attempt because channel is closed
+        with pytest.raises(util.Closed):
+            c.read_before(Nanoseconds.from_seconds(1))
+        with pytest.raises(util.Closed):
+            c.write_before(Nanoseconds.from_seconds(1), 0)
 
 def test_oneone():
     c = OneOne()

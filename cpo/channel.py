@@ -531,6 +531,7 @@ class _N2NBuf(SharedChan[T]):
         self.queue: queue.Queue = queue.Queue(maxsize=size)
         self.register()
 
+    @property
     def in_port_state(self) -> PortState:
         if self.input_closed.get():
             return CLOSEDSTATE
@@ -538,6 +539,7 @@ class _N2NBuf(SharedChan[T]):
             return UNKNOWNSTATE
         return READYSTATE
 
+    @property
     def out_port_state(self) -> PortState:
         if self.output_closed.get():
             return CLOSEDSTATE
@@ -566,7 +568,7 @@ class _N2NBuf(SharedChan[T]):
                f"{self.state('OutPort', self.output_closed.get())} " \
                f"{self.state('InPort', self.input_closed.get())}" \
                f"(writers={self.ws.get()}, readers={self.rs.get()}) " \
-               f"size={self.size}, length={len(self.queue)}) " \
+               f"size={self.size}, length={self.queue.qsize()}) " \
                f"{self.finished_rw()}"
 
     def show_state(self, file) -> None:
@@ -597,9 +599,11 @@ class _N2NBuf(SharedChan[T]):
             self.out_port_event(CLOSEDSTATE)
             self.close()
 
+    @property
     def can_input(self) -> bool:
         return not (self.output_closed.get() and self.is_empty())
 
+    @property
     def can_output(self) -> bool:
         return not self.input_closed.get()
 
@@ -632,7 +636,10 @@ class _N2NBuf(SharedChan[T]):
             self.close()
             raise util.Closed(self.name)
         self.out_port_event(READYSTATE)
-        return self.queue.get(timeout=ns.to_seconds())
+        try:
+            return self.queue.get(timeout=ns.to_seconds())
+        except queue.Empty:
+            return None
 
     def __lshift__(self, value: T) -> T:
         if self.output_closed.get() or self.input_closed.get():
@@ -669,7 +676,7 @@ class _N2NBufFactory(NameGenerator, metaclass=Singleton):
 
 N2NBuf = _N2NBufFactory()
 
-def OneOneBuf(size: int, name: Optional[str] = None):
+def OneOneBuf(size: int = 0, name: Optional[str] = None):
     if name is None:
         name = N2N._new_name('OneOneBuf')
     return N2NBuf(size=size, writers=1, readers=1, name=name)
