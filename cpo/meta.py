@@ -19,12 +19,28 @@ def proc(fn: Optional[Callable] = None, *args, **kwargs):
 T = TypeVar('T')
 def procs(variant_arg: Optional[Iterable[T]] = None,
           variant_args: Optional[Iterable[Sequence]] = None):
-    """ A decorator to create multiple processes """
+    """ A decorator to create multiple concurrent processes """
     def decorator(fn: Callable) -> process.PROC:
         if variant_arg is not None and variant_args is None:
             return process.ParSyntax([proc(fn, arg) for arg in variant_arg])
         if variant_arg is None and variant_args is not None:
             return process.ParSyntax([proc(fn, *args) for args in variant_args])
+        raise ValueError("Must set one of variant_arg and "
+                         "variant_args but not both")
+    return decorator
+
+
+T = TypeVar('T')
+def ordered_procs(variant_arg: Optional[Iterable[T]] = None,
+          variant_args: Optional[Iterable[Sequence]] = None):
+    """ A decorator to create multiple ordered processes """
+    def decorator(fn: Callable) -> process.PROC:
+        if variant_arg is not None and variant_args is None:
+            return process.OrderedSyntax([proc(fn, arg)
+                                          for arg in variant_arg])
+        if variant_arg is None and variant_args is not None:
+            return process.OrderedSyntax([proc(fn, *args)
+                                          for args in variant_args])
         raise ValueError("Must set one of variant_arg and "
                          "variant_args but not both")
     return decorator
