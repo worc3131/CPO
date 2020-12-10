@@ -30,7 +30,7 @@ as follows:
 | p1 &#124;&#124; p2 &#124;&#124; .. | p1 &#124; p2 &#124; .. | Run each of these processes concurrently only terminating when all of them have terminated |
 | p1 &#124;&#124; [p2,p3,..] | p1 &#124; [p2,p3,...] | |
 | nyi              | p1 >> p2 >> ... | Run proc p1 then once finished run p2 etc. | 
-| `run(p)`         | `run(p)`  or `run` | Run p in the current thread |
+| `run(p)`         | `run(p)`  or `@run` | Run p in the current thread |
 | `fork(p)`        | `fork(p)` or `@fork` | Run p in a new thread, returning a handle |
 | ATTEMPT          | `attempt(f)` or `@attempt` | Attempt to run the function |
 | REPEAT           | `repeat(f)` or `@repeat` | Repeatedly run the function |
