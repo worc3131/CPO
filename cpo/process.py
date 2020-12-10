@@ -258,7 +258,11 @@ class ParException(Exception):
     def __repr__(self):
         return f'ParException({", ".join(self.exceptions)})'
 
-
+# TODO - Compile and run as seperate class subtypes
+# Split up the compile and run steps of PROC's to avoid
+# these syntax specifiers being called directly and requiring
+# a _stack_size etc. (otherwise when nested they have to be
+# repeatably compiled on each run, which is mildly wasteful
 class ParSyntax(PROC):
 
     def __init__(self, _procs: List[PROC]):
