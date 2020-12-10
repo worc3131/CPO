@@ -139,7 +139,7 @@ class Simple(PROC):
         self.body = body
         self._stack_size = 0
         if name is None:
-            name = "<anonymous>"
+            name = str(body)
         self._name = name
 
     def fork(self) -> Handle:
