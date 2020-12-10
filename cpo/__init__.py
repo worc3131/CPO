@@ -13,10 +13,11 @@ from .debugger import DEBUGGER
 from .flag import Flag
 from .lock import SimpleLock
 from .logger import Logger, LOG
-from .meta import proc, procs, attempt, repeat, fork, fork_proc, fork_procs,\
-    stop, gen_proc, fork_gen_proc
+from .meta import proc, procs, ordered_procs, attempt, repeat, fork, fork_proc,\
+    fork_procs, stop, gen_proc, fork_gen_proc
 from .monitor import Monitor
-from .process import Simple, IterToChannel, SKIP, Par, ParSyntax
+from .process import Simple, IterToChannel, SKIP, Par,  OrderedProcs,\
+    ParSyntax, OrderedSyntax
 from .queue import LockFreeQueue
 from .semaphore import BooleanSemaphore, CountingSemaphore
 from .util import Closed, Stopped, Nanoseconds

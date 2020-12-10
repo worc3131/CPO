@@ -73,3 +73,55 @@ def test_close_channel():
     p = write | square | read
     p()
     assert result == sum(x*x for x in range(500))
+
+def test_ordered_procs():
+    N = 100000
+    order = []
+    @ordered_procs(range(N))
+    def workers(i):
+        order.append(i)
+    workers()
+    assert order == list(range(N))
+
+def test_unordered_procs():
+    # this could fail by chance
+    N = 100000
+    order = []
+    @procs(range(N))
+    def workers(i):
+        order.append(i)
+    workers()
+    assert order != list(range(N))
+
+def test_ordered_concurrent_procs():
+    N = 1000
+    order = []
+    @procs(range(N))
+    def workers_1(i):
+        order.append(i)
+    @procs(range(N))
+    def workers_2(i):
+        order.append(i+N)
+    p = workers_1 >> workers_2
+    p()
+    assert sorted(order[:N]) == list(range(0,   N))
+    assert sorted(order[N:]) == list(range(N, 2*N))
+
+def test_repeated_procs():
+    N = 1000
+    M = 100
+    order = []
+    @procs(range(N))
+    def workers(i):
+        order.append(i)
+    n_runs = 0
+    @proc
+    def checker():
+        nonlocal order, n_runs
+        assert sorted(order) == list(range(N))
+        order = []
+        n_runs += 1
+    p = workers >> checker
+    for _ in range(M):
+        p()
+    assert n_runs == M
