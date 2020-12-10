@@ -4,7 +4,6 @@ from cpo import *
 def test_lock_init():
     SimpleLock()
 
-
 def test_simplelock_acq():
     lock = SimpleLock()
     val = 0

@@ -1,7 +1,6 @@
 
 from cpo import *
 
-
 def test_stress_proc():
     N = 100
     channels = [OneOne(name=i) for i in range(N)]
