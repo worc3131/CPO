@@ -253,7 +253,7 @@ def test_n2nbuf():
     assert sorted(read) == [10, 20]
 
 def test_faultyoneone():
-    c = FaultyOneOne(prob_loss=0.36)
+    c = FaultyOneOne(prob_loss=1-0.36)
     N = 100000
     total = 0
     @proc
@@ -263,8 +263,11 @@ def test_faultyoneone():
         total += ~c
     @proc
     def writer():
-        for _ in range(N):
-            c << 1
+        for i in range(N):
+            if i % 2:  # alternate between the two methods
+                c << 1
+            else:
+                c.write_before(Nanoseconds.from_seconds(1), 1)
         c.close()
     (reader | writer)()
     # could fail probabilistically (unlikely ~6 std)

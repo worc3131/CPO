@@ -692,6 +692,10 @@ class FaultyMixin:
         if random.random() > self.prob_loss:
             return super().__lshift__(value)
 
+    def write_before(self, timeout: Nanoseconds, value) -> bool:
+        if random.random() > self.prob_loss:
+            return super().write_before(timeout, value)
+
 class _FaultyOneOne(FaultyMixin, _OneOne):
     pass
 
