@@ -253,8 +253,8 @@ def test_n2nbuf():
     assert sorted(read) == [10, 20]
 
 def test_faultyoneone():
-    c = FaultyOneOne(prob_loss=0.5)
-    N = 10000
+    c = FaultyOneOne(prob_loss=0.36)
+    N = 100000
     total = 0
     @proc
     @repeat
@@ -267,5 +267,5 @@ def test_faultyoneone():
             c << 1
         c.close()
     (reader | writer)()
-    # could fail probabilistically (unlikely)
-    assert 0.49*N < total < 0.51*N
+    # could fail probabilistically (unlikely ~6 std)
+    assert 0.35*N < total < 0.37*N
