@@ -21,4 +21,4 @@ from .process import Simple, IterToChannel, SKIP, Par,  OrderedProcs,\
     ParSyntax, OrderedSyntax
 from .queue import LockFreeQueue
 from .semaphore import BooleanSemaphore, CountingSemaphore
-from .util import Closed, Stopped, Nanoseconds
+from .util import Closed, Crashed, Stopped, Nanoseconds

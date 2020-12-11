@@ -1,9 +1,10 @@
 
 import inspect
+import random
 from typing import Callable, Iterable, Optional, Sequence, TypeVar
 
 from . import process
-from .util import Closed, Stopped
+from .util import Closed, Crashed, Stopped
 
 def proc(fn: Optional[Callable] = None, *args, **kwargs):
     """A decorator to create a process"""
@@ -64,7 +65,8 @@ def attempt(body: Optional[Callable] = None,
 
 def repeat(body: Optional[Callable] = None,
            guard: Optional[Callable[[], bool]] = None,
-           finally_: Optional[Callable[[], None]] = None) \
+           finally_: Optional[Callable[[], None]] = None,
+           prob_crash: float = 0) \
         -> Callable:
     """ A decorator to repeat an action """
     def decorator(body):
@@ -74,6 +76,8 @@ def repeat(body: Optional[Callable] = None,
                 guard = lambda *args: True
             go = guard(*args)
             while go:
+                if prob_crash > 0 and random.random() < prob_crash:
+                    raise Crashed
                 try:
                     body(*args)
                     go = guard(*args)
@@ -157,3 +161,4 @@ def fork_gen_proc(gen=None, in_channel=None, out_channel=None):
         return decorator
     else:
         return decorator(gen)
+

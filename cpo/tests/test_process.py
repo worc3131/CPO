@@ -1,4 +1,6 @@
 
+import pytest
+
 from cpo import *
 
 def test_process__init():
@@ -152,3 +154,11 @@ def test_nested_procs():
     p = (W0 | (W1 >> W2)) >> (W3 | W4)
     p()
     assert runs == [1, 1, 1, 1, 1]
+
+def test_crash():
+    @proc
+    @repeat(prob_crash=0.1)
+    def worker():
+        pass
+    with pytest.raises(Crashed):
+        worker()

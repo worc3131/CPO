@@ -49,6 +49,10 @@ class Stopped(Exception):
     pass
 
 
+class Crashed(Stopped):
+    pass
+
+
 class Closed(Stopped):
     def __init__(self, name):
         super().__init__(f'Closed({name})')
