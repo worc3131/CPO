@@ -267,7 +267,7 @@ def test_faultyoneone():
             if i % 2:  # alternate between the two methods
                 c << 1
             else:
-                c.write_before(Nanoseconds.from_seconds(1), 1)
+                c.write_before(Nanoseconds.from_seconds(0.0001), 1)
         c.close()
     (reader | writer)()
     # could fail probabilistically (unlikely ~6 std)

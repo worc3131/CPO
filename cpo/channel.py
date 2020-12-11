@@ -693,8 +693,10 @@ class FaultyMixin:
             return super().__lshift__(value)
 
     def write_before(self, timeout: Nanoseconds, value) -> bool:
-        if random.random() > self.prob_loss:
-            return super().write_before(timeout, value)
+        if random.random() < self.prob_loss:
+            threads.park_current_thread(timeout)
+            return False
+        return super().write_before(timeout, value)
 
 class _FaultyOneOne(FaultyMixin, _OneOne):
     pass
