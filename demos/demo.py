@@ -8,4 +8,5 @@ if __name__ == '__main__':
     demo_pi.main()
     demo_primes.main()
     demo_readers_writers.main()
+    demo_tcp.main()
 
