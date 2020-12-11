@@ -251,3 +251,21 @@ def test_n2nbuf():
     c << 20
     time.sleep(0.2)
     assert sorted(read) == [10, 20]
+
+def test_faultyoneone():
+    c = FaultyOneOne(prob_loss=0.5)
+    N = 10000
+    total = 0
+    @proc
+    @repeat
+    def reader():
+        nonlocal total
+        total += ~c
+    @proc
+    def writer():
+        for _ in range(N):
+            c << 1
+        c.close()
+    (reader | writer)()
+    # could fail probabilistically (unlikely)
+    assert 0.49*N < total < 0.51*N

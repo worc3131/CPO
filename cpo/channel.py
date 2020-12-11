@@ -1,9 +1,10 @@
 
 from __future__ import annotations
 
-import threading
 from abc import ABC
 import queue
+import random
+import threading
 from typing import Generic, List, Optional, TypeVar, Callable
 
 from .atomic import Atomic, AtomicNum
@@ -680,3 +681,34 @@ def OneOneBuf(size: int = 0, name: Optional[str] = None):
     if name is None:
         name = N2N._new_name('OneOneBuf')
     return N2NBuf(size=size, writers=1, readers=1, name=name)
+
+class FaultyMixin:
+
+    def __init__(self, *args, prob_loss=0, **kwargs):
+        self.prob_loss = prob_loss
+        super().__init__(*args, **kwargs)
+
+    def __lshift__(self, value):
+        if random.random() > self.prob_loss:
+            return super().__lshift__(value)
+
+class _FaultyOneOne(FaultyMixin, _OneOne):
+    pass
+
+class _FaultyOneOneFactory(NameGenerator, metaclass=Singleton):
+
+    def __init__(self):
+        super().__init__('FaultyOneOne')
+
+    def __call__(self, prob_loss: float, name: Optional[str] = None) -> _OneOne:
+        """
+        Args:
+            name: The name for the channel.
+
+        Returns: A new FaultyOneOne channel
+        """
+        if name is None:
+            name = self._new_name()
+        return _FaultyOneOne(name, prob_loss=prob_loss)
+
+FaultyOneOne = _FaultyOneOneFactory()
